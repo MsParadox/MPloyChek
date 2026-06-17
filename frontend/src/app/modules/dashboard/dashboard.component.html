@@ -30,8 +30,13 @@
     </div>
     <div class="ab-prog"><div class="ab-bar" [style.width.%]="getAsyncProgress()"></div></div>
   </div>
-  <div class="perf-note" *ngIf="lastProcessingTime !== null && !isLoadingRecords">
+  <div class="perf-note" *ngIf="lastProcessingTime !== null && !isLoadingRecords && !loadError">
     ⚡ Loaded in <strong>{{ lastProcessingTime }}ms</strong> (incl. {{ asyncDelayMs }}ms delay)
+  </div>
+  <div class="load-error-banner" *ngIf="loadError && !isLoadingRecords">
+    <mat-icon>cloud_off</mat-icon>
+    <span>{{ loadError }}</span>
+    <button (click)="loadDashboard()">Retry</button>
   </div>
 
   <!-- Stats (Admin/Manager) -->

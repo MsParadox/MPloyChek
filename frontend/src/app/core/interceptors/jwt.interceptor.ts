@@ -64,12 +64,15 @@ export class JwtInterceptor implements HttpInterceptor {
     }
 
     return new Observable(observer => {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
       fetch(`${environment.apiUrl}/auth/refresh`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ refreshToken: rt }),
+        signal:  ctrl.signal,
       })
-      .then(r => r.json())
+      .then(r => { clearTimeout(timer); return r.json(); })
       .then(data => {
         if (data.success && data.data) {
           const newToken = data.data.accessToken;

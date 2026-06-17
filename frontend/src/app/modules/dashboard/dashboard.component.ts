@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subject, forkJoin, takeUntil, finalize } from 'rxjs';
+import { Subject, forkJoin, takeUntil, finalize, catchError, of } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { RecordsService } from '../../core/services/records.service';
@@ -33,9 +33,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
+  loadError = '';
+
   constructor(
     public auth: AuthService,
     public router: Router,
+    private zone: NgZone,
     private userSvc: UserService,
     private recordsSvc: RecordsService,
     private candidatesSvc: CandidatesService,
@@ -50,40 +53,58 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   loadDashboard(delay = this.asyncDelayMs): void {
     this.asyncDelayMs = delay;
+    this.loadError = '';
     this.loadProfile();
     this.loadRecords(delay);
-    this.candidatesSvc.load().pipe(takeUntil(this.destroy$)).subscribe({ next: r => { this.candidates = r.data || []; } });
-    this.notifSvc.load().pipe(takeUntil(this.destroy$)).subscribe();
+    this.candidatesSvc.load().pipe(takeUntil(this.destroy$), catchError(() => of({ data: [] } as any))).subscribe({ next: r => { this.candidates = r.data || []; } });
+    this.notifSvc.load().pipe(takeUntil(this.destroy$), catchError(() => of(null))).subscribe();
     if (this.auth.isAdmin || this.auth.currentUser?.role === 'Manager') {
       this.loadStats();
-      this.analyticsSvc.getOverview(0).pipe(takeUntil(this.destroy$)).subscribe({ next: r => this.analytics = r.data || null });
+      this.analyticsSvc.getOverview(0).pipe(takeUntil(this.destroy$), catchError(() => of(null))).subscribe({ next: r => this.analytics = (r as any)?.data || null });
     }
   }
 
   loadProfile(): void {
     this.isLoadingProfile = true;
-    this.auth.fetchMe().pipe(takeUntil(this.destroy$), finalize(() => this.isLoadingProfile = false))
-      .subscribe({ next: r => { if (r.data) this.currentUser = r.data; } });
+    this.auth.fetchMe().pipe(
+      takeUntil(this.destroy$),
+      catchError(() => of(null)),
+      finalize(() => this.zone.run(() => { this.isLoadingProfile = false; }))
+    ).subscribe({ next: r => { if ((r as any)?.data) this.currentUser = (r as any).data; } });
   }
 
   loadRecords(delay = this.asyncDelayMs): void {
     this.isLoadingRecords = true;
     this.loadStartTime = Date.now();
     this.startElapsedTimer();
-    this.recordsSvc.loadRecords(delay).pipe(takeUntil(this.destroy$), finalize(() => { this.isLoadingRecords = false; this.stopElapsedTimer(); }))
-      .subscribe({ next: r => { if (r.data) { this.records = r.data; this.lastProcessingTime = r.processingTime ?? null; } } });
+    this.recordsSvc.loadRecords(delay).pipe(
+      takeUntil(this.destroy$),
+      catchError(err => {
+        const msg = err?.error?.error || 'Failed to load data. Server may be waking up — please refresh in a moment.';
+        this.loadError = msg;
+        return of({ data: [], success: false } as any);
+      }),
+      finalize(() => this.zone.run(() => { this.isLoadingRecords = false; this.stopElapsedTimer(); }))
+    ).subscribe({ next: r => { if ((r as any)?.data?.length) { this.records = (r as any).data; this.lastProcessingTime = (r as any).processingTime ?? null; } } });
   }
 
   loadStats(): void {
     this.isLoadingStats = true;
-    this.userSvc.getStats().pipe(takeUntil(this.destroy$), finalize(() => this.isLoadingStats = false))
-      .subscribe({ next: r => { if (r.data) this.stats = r.data; } });
+    this.userSvc.getStats().pipe(
+      takeUntil(this.destroy$),
+      catchError(() => of(null)),
+      finalize(() => this.zone.run(() => { this.isLoadingStats = false; }))
+    ).subscribe({ next: r => { if ((r as any)?.data) this.stats = (r as any).data; } });
   }
 
   private startElapsedTimer(): void {
     this.elapsedMs = 0;
     this.stopElapsedTimer();
-    this.elapsedInterval = setInterval(() => { this.elapsedMs = Date.now() - (this.loadStartTime || Date.now()); }, 50);
+    // Run outside Angular zone — updates elapsedMs without triggering change detection on every tick.
+    // Angular still renders the updated value on its own scheduled ticks.
+    this.zone.runOutsideAngular(() => {
+      this.elapsedInterval = setInterval(() => { this.elapsedMs = Date.now() - (this.loadStartTime || Date.now()); }, 100);
+    });
   }
   private stopElapsedTimer(): void {
     if (this.elapsedInterval) { clearInterval(this.elapsedInterval); this.elapsedInterval = null; }
