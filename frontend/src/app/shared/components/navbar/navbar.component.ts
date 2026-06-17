@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import { Subject, takeUntil, filter } from 'rxjs';
+import { Subject, takeUntil, filter, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationsService } from '../../../core/services/notifications.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -33,8 +33,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.auth.currentUser$.pipe(takeUntil(this.destroy$)).subscribe((user: User | null) => {
-      this.currentUser = user;
+    // Update display on every user change.
+    this.auth.currentUser$.pipe(takeUntil(this.destroy$))
+      .subscribe((user: User | null) => this.currentUser = user);
+
+    // Load notifications only when authentication state changes (null→user on login),
+    // not on every fetchMe() response — avoids redundant HTTP calls.
+    this.auth.currentUser$.pipe(
+      takeUntil(this.destroy$),
+      distinctUntilChanged((a, b) => !!a === !!b),
+    ).subscribe((user: User | null) => {
       if (user) this.notifSvc.load().pipe(takeUntil(this.destroy$)).subscribe();
     });
     this.notifSvc.unreadCount$.pipe(takeUntil(this.destroy$)).subscribe(n => this.unreadCount = n);

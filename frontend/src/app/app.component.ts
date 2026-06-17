@@ -4,7 +4,7 @@
 // ============================================================
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, NavigationStart, NavigationEnd, NavigationError } from '@angular/router';
-import { Subject, takeUntil, debounceTime } from 'rxjs';
+import { Subject, EMPTY, takeUntil, debounceTime, switchMap } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { SessionService } from './core/services/session.service';
 import { WebSocketService } from './core/services/websocket.service';
@@ -55,36 +55,31 @@ export class AppComponent implements OnInit, OnDestroy {
     const savedLang = localStorage.getItem('mploychek_lang');
     if (savedLang) document.documentElement.lang = savedLang;
 
-    this.auth.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
-      this.isAuthenticated = !!user;
-      if (user) {
-        // Start session timer
-        const token = this.auth.token;
-        if (token) {
-          try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            const remaining = payload.exp - Math.floor(Date.now() / 1000);
-            if (remaining > 0) this.session.startSession(remaining);
-          } catch { /* invalid token */ }
+    // switchMap replaces the inner message$ subscription each time currentUser$ emits,
+    // preventing subscription accumulation from repeated fetchMe() calls.
+    this.auth.currentUser$.pipe(
+      takeUntil(this.destroy$),
+      switchMap(user => {
+        this.isAuthenticated = !!user;
+        if (user) {
+          const token = this.auth.token;
+          if (token) {
+            try {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              const remaining = payload.exp - Math.floor(Date.now() / 1000);
+              if (remaining > 0) this.session.startSession(remaining);
+            } catch { /* invalid token */ }
+            this.wsService.connect(token);
+            return this.wsService.message$.pipe(debounceTime(500));
+          }
+        } else {
+          this.session.stopSession();
+          this.wsService.disconnect();
         }
-
-        // FIX CRITICAL-2: Connect WebSocket with the JWT token, not user.id.
-        // The server validates the token and rejects unauthenticated connections.
-        if (token) {
-          this.wsService.connect(token);
-          // Debounce notification reloads so rapid WS events don't cascade into
-          // multiple simultaneous HTTP calls and Angular change-detection loops.
-          this.wsService.message$.pipe(
-            takeUntil(this.destroy$),
-            debounceTime(500),
-          ).subscribe(msg => {
-            if (msg.type === 'notification') this.notifSvc.load().subscribe();
-          });
-        }
-      } else {
-        this.session.stopSession();
-        this.wsService.disconnect();
-      }
+        return EMPTY;
+      }),
+    ).subscribe(msg => {
+      if (msg.type === 'notification') this.notifSvc.load().subscribe();
     });
 
     this.router.events.pipe(takeUntil(this.destroy$)).subscribe(event => {
