@@ -10,6 +10,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject, takeUntil, finalize } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
+import { environment } from '@environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -45,7 +46,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.loginForm = this.fb.group({
       userId:   ['', [Validators.required, Validators.minLength(4)]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      delay:    [800],
+      delay:    [environment.defaultDelay],
     });
 
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {

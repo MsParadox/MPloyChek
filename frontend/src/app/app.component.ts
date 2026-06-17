@@ -3,7 +3,7 @@
 // Author: Mohit Sharma
 // ============================================================
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, NavigationStart, NavigationEnd, NavigationError } from '@angular/router';
+import { Router, NavigationStart, NavigationEnd, NavigationError, NavigationCancel } from '@angular/router';
 import { Subject, takeUntil, debounceTime } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { SessionService } from './core/services/session.service';
@@ -70,26 +70,27 @@ export class AppComponent implements OnInit, OnDestroy {
 
         // FIX CRITICAL-2: Connect WebSocket with the JWT token, not user.id.
         // The server validates the token and rejects unauthenticated connections.
-        if (token) {
-          this.wsService.connect(token);
-          // Debounce notification reloads so rapid WS events don't cascade into
-          // multiple simultaneous HTTP calls and Angular change-detection loops.
-          this.wsService.message$.pipe(
-            takeUntil(this.destroy$),
-            debounceTime(500),
-          ).subscribe(msg => {
-            if (msg.type === 'notification') this.notifSvc.load().subscribe();
-          });
-        }
+        if (token) this.wsService.connect(token);
       } else {
         this.session.stopSession();
         this.wsService.disconnect();
       }
     });
 
+    // Debounce notification reloads so rapid WS events don't cascade into
+    // multiple simultaneous HTTP calls and Angular change-detection loops.
+    this.wsService.message$.pipe(
+      takeUntil(this.destroy$),
+      debounceTime(500),
+    ).subscribe(msg => {
+      if (msg.type === 'notification') this.notifSvc.load().subscribe();
+    });
+
     this.router.events.pipe(takeUntil(this.destroy$)).subscribe(event => {
       if (event instanceof NavigationStart)  this.isNavigating = true;
-      if (event instanceof NavigationEnd || event instanceof NavigationError) this.isNavigating = false;
+      if (event instanceof NavigationEnd || event instanceof NavigationError || event instanceof NavigationCancel) {
+        this.isNavigating = false;
+      }
     });
   }
 

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subject, forkJoin, takeUntil, finalize } from 'rxjs';
+import { Subject, takeUntil, finalize, timeout, catchError, of } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { RecordsService } from '../../core/services/records.service';
@@ -26,6 +26,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isLoadingStats    = false;
   asyncDelayMs      = 800;
   lastProcessingTime: number | null = null;
+  recordsError      = '';
   loadStartTime: number | null = null;
   elapsedMs = 0;
   elapsedInterval: ReturnType<typeof setInterval> | null = null;
@@ -44,6 +45,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUser = this.auth.currentUser;
+    this.asyncDelayMs = 0;
     this.loadDashboard();
   }
 
@@ -67,10 +69,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   loadRecords(delay = this.asyncDelayMs): void {
     this.isLoadingRecords = true;
+    this.recordsError = '';
     this.loadStartTime = Date.now();
     this.startElapsedTimer();
-    this.recordsSvc.loadRecords(delay).pipe(takeUntil(this.destroy$), finalize(() => { this.isLoadingRecords = false; this.stopElapsedTimer(); }))
-      .subscribe({ next: r => { if (r.data) { this.records = r.data; this.lastProcessingTime = r.processingTime ?? null; } } });
+    this.recordsSvc.loadRecords(delay).pipe(
+      takeUntil(this.destroy$),
+      timeout(15000),
+      catchError(() => {
+        this.recordsError = 'Records are taking too long to load. Please refresh.';
+        return of({ success: false, data: [] });
+      }),
+      finalize(() => { this.isLoadingRecords = false; this.stopElapsedTimer(); }),
+    ).subscribe({ next: r => { if (r.data) { this.records = r.data; this.lastProcessingTime = r.processingTime ?? null; } } });
   }
 
   loadStats(): void {
