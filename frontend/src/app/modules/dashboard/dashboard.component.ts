@@ -7,7 +7,7 @@ import { RecordsService } from '../../core/services/records.service';
 import { CandidatesService } from '../../core/services/candidates.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { AnalyticsService } from '../../core/services/analytics.service';
-import { User, VerificationRecord, DashboardStats, Candidate, AnalyticsOverview, TERMINAL_STATUSES } from '../../core/models';
+import { ApiResponse, User, VerificationRecord, DashboardStats, Candidate, AnalyticsOverview, TERMINAL_STATUSES } from '../../core/models';
 
 @Component({
   selector: 'app-dashboard',
@@ -77,7 +77,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       timeout(15000),
       catchError(() => {
         this.recordsError = 'Records are taking too long to load. Please refresh.';
-        return of({ success: false, data: [] });
+        return of<ApiResponse<VerificationRecord[]>>({ success: false, data: [] });
       }),
       finalize(() => { this.isLoadingRecords = false; this.stopElapsedTimer(); }),
     ).subscribe({ next: r => { if (r.data) { this.records = r.data; this.lastProcessingTime = r.processingTime ?? null; } } });
