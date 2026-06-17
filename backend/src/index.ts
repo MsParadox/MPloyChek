@@ -98,7 +98,19 @@ app.get('/api', (_req, res) => res.json({
     url:    'wss://<host>?token=<JWT>',
     note:   'Authenticate via JWT token in query string. userId in query param was removed (security fix).',
   },
-  queryParams: { delay: 'Add ?delay=ms to any GET endpoint to simulate async API latency (0–10000ms)' },
+  queryParams: { delay: 'Add ?delay=ms to any GET endpoint to simulate async API latency (0-10000ms)' },
+}));
+
+app.get('/', (_req: Request, res: Response) => res.json({
+  success: true,
+  name: 'MPloyChek API v4.0',
+  status: 'online',
+  message: 'Backend API is running. Use /api for the endpoint catalogue.',
+  endpoints: {
+    api: '/api',
+    health: '/api/health',
+  },
+  timestamp: new Date().toISOString(),
 }));
 
 // ── Feature Routes ────────────────────────────────────────────
