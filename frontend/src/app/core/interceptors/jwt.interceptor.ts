@@ -7,9 +7,11 @@ import {
   HttpEvent, HttpHandler, HttpInterceptor,
   HttpRequest, HttpErrorResponse,
 } from '@angular/common/http';
-import { Observable, throwError, BehaviorSubject, catchError, filter, switchMap, take } from 'rxjs';
+import { Observable, throwError, BehaviorSubject, catchError, filter, switchMap, take, timeout, TimeoutError } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '@environments/environment';
+
+const REQUEST_TIMEOUT_MS = 30_000; // 30s — prevents infinite hang on Render cold start
 
 @Injectable()
 export class JwtInterceptor implements HttpInterceptor {
@@ -25,9 +27,13 @@ export class JwtInterceptor implements HttpInterceptor {
       : req;
 
     return next.handle(authReq).pipe(
-      catchError((err: HttpErrorResponse) => {
+      timeout(REQUEST_TIMEOUT_MS),
+      catchError((err: HttpErrorResponse | TimeoutError) => {
+        if (err instanceof TimeoutError) {
+          return throwError(() => ({ error: { error: 'Server is waking up — please try again in a few seconds.' }, status: 0 }));
+        }
         if (err.status === 401 && !req.url.includes('/auth/')) {
-          return this.handle401(req, next);
+          return this.handle401(req, next as HttpHandler);
         }
         if (err.status === 401) {
           this.clearAndRedirect();

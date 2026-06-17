@@ -39,12 +39,12 @@ services:
       - key:   RT_EXPIRES_DAYS
         value: "7"
 
-      # Set to your Vercel URL after frontend deploy — no trailing slash
+      # Vercel frontend origin — no trailing slash
       - key:   ALLOWED_ORIGINS
-        sync:  false
+        value: "https://m-ploy-chek.vercel.app"
 
       - key:   FRONTEND_URL
-        sync:  false
+        value: "https://m-ploy-chek.vercel.app"
 
       # Brevo (email) — optional, app works without it
       - key:   BREVO_SMTP_LOGIN

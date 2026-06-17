@@ -46,8 +46,11 @@ const NODE_ENV= process.env['NODE_ENV'] || 'development';
 app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression() as any);
+const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:4200').split(',').map(o => o.trim());
+// Log on startup so CORS misconfiguration is immediately visible in Render logs
+console.log(`[CORS] Allowed origins: ${allowedOrigins.join(', ')}`);
 app.use(cors({
-  origin:         (process.env['ALLOWED_ORIGINS'] || 'http://localhost:4200').split(','),
+  origin:         allowedOrigins,
   credentials:    true,
   methods:        ['GET','POST','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],

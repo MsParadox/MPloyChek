@@ -8,6 +8,7 @@ import { CandidatesService } from '../../core/services/candidates.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { User, VerificationRecord, DashboardStats, Candidate, AnalyticsOverview, TERMINAL_STATUSES } from '../../core/models';
+import { environment } from '@environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -24,7 +25,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isLoadingProfile  = false;
   isLoadingRecords  = false;
   isLoadingStats    = false;
-  asyncDelayMs      = 800;
+  asyncDelayMs      = environment.defaultDelay;
   lastProcessingTime: number | null = null;
   loadStartTime: number | null = null;
   elapsedMs = 0;
