@@ -15,5 +15,14 @@
     "experimentalDecorators": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules","dist","prisma"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "prisma",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/__tests__/**",
+    "src/__mocks__/**",
+    "src/**/__mocks__/**"
+  ]
 }
