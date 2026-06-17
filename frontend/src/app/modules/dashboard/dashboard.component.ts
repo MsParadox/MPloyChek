@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subject, forkJoin, takeUntil, finalize, catchError, of } from 'rxjs';
+import { Subject, takeUntil, finalize, catchError, of } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { RecordsService } from '../../core/services/records.service';
@@ -34,6 +34,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   loadError = '';
+  retryIn   = 0;   // seconds until next auto-retry (shown in banner)
+  autoRetryCount  = 0;
+  readonly MAX_AUTO_RETRIES  = 6;
+  private autoRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  private retryTickInterval: ReturnType<typeof setInterval> | null = null;
+  private readonly AUTO_RETRY_DELAY  = 8000; // 8 seconds between retries
 
   constructor(
     public auth: AuthService,
@@ -54,6 +60,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loadDashboard(delay = this.asyncDelayMs): void {
     this.asyncDelayMs = delay;
     this.loadError = '';
+    this.autoRetryCount = 0;
+    this.clearRetryTimers();
     this.loadProfile();
     this.loadRecords(delay);
     this.candidatesSvc.load().pipe(takeUntil(this.destroy$), catchError(() => of({ data: [] } as any))).subscribe({ next: r => { this.candidates = r.data || []; } });
@@ -80,8 +88,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.recordsSvc.loadRecords(delay).pipe(
       takeUntil(this.destroy$),
       catchError(err => {
-        const msg = err?.error?.error || 'Failed to load data. Server may be waking up — please refresh in a moment.';
-        this.loadError = msg;
+        const isColdStart = err?.status === 0 || err?.status === 502 || err?.status === 503 || err?.status === 504;
+        if (isColdStart && this.autoRetryCount < this.MAX_AUTO_RETRIES) {
+          this.autoRetryCount++;
+          this.scheduleAutoRetry(delay);
+        } else {
+          this.loadError = err?.error?.error || 'Failed to load data. The server may be unavailable — please try again later.';
+        }
         return of({ data: [], success: false } as any);
       }),
       finalize(() => this.zone.run(() => { this.isLoadingRecords = false; this.stopElapsedTimer(); }))
@@ -95,6 +108,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
       catchError(() => of(null)),
       finalize(() => this.zone.run(() => { this.isLoadingStats = false; }))
     ).subscribe({ next: r => { if ((r as any)?.data) this.stats = (r as any).data; } });
+  }
+
+  private scheduleAutoRetry(delay: number): void {
+    this.clearRetryTimers();
+    this.retryIn = Math.round(this.AUTO_RETRY_DELAY / 1000);
+    // Countdown runs at 1 tick/second inside zone so the template updates.
+    // This is only ~8 ticks between retries — negligible CPU cost.
+    this.retryTickInterval = setInterval(() => {
+      this.retryIn = Math.max(0, this.retryIn - 1);
+    }, 1000);
+    this.autoRetryTimer = setTimeout(() => {
+      this.zone.run(() => {
+        this.clearRetryTimers();
+        this.loadRecords(delay);
+      });
+    }, this.AUTO_RETRY_DELAY);
+  }
+
+  private clearRetryTimers(): void {
+    if (this.autoRetryTimer)    { clearTimeout(this.autoRetryTimer);    this.autoRetryTimer = null; }
+    if (this.retryTickInterval) { clearInterval(this.retryTickInterval); this.retryTickInterval = null; }
+    this.retryIn = 0;
   }
 
   private startElapsedTimer(): void {
@@ -151,5 +186,5 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // FIX: Use TERMINAL_STATUSES for overdue check
   isOverdue(r: VerificationRecord) { return !TERMINAL_STATUSES.includes(r.status) && new Date(r.dueDate) < new Date(); }
 
-  ngOnDestroy(): void { this.stopElapsedTimer(); this.destroy$.next(); this.destroy$.complete(); }
+  ngOnDestroy(): void { this.stopElapsedTimer(); this.clearRetryTimers(); this.destroy$.next(); this.destroy$.complete(); }
 }
