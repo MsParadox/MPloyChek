@@ -23,9 +23,6 @@ function getTransporter() {
     host: 'smtp-relay.brevo.com',
     port: 587,
     secure: false, // TLS via STARTTLS
-    connectionTimeout: 5000,
-    greetingTimeout: 5000,
-    socketTimeout: 10000,
     auth: {
       user: process.env['BREVO_SMTP_LOGIN'],
       pass: process.env['BREVO_SMTP_PASSWORD'],

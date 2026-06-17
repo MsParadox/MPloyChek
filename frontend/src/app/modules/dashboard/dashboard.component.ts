@@ -1,13 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subject, takeUntil, finalize, timeout, catchError, of } from 'rxjs';
+import { Subject, forkJoin, takeUntil, finalize } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { RecordsService } from '../../core/services/records.service';
 import { CandidatesService } from '../../core/services/candidates.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { AnalyticsService } from '../../core/services/analytics.service';
-import { ApiResponse, User, VerificationRecord, DashboardStats, Candidate, AnalyticsOverview, TERMINAL_STATUSES } from '../../core/models';
+import { User, VerificationRecord, DashboardStats, Candidate, AnalyticsOverview, TERMINAL_STATUSES } from '../../core/models';
 
 @Component({
   selector: 'app-dashboard',
@@ -26,7 +26,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isLoadingStats    = false;
   asyncDelayMs      = 800;
   lastProcessingTime: number | null = null;
-  recordsError      = '';
   loadStartTime: number | null = null;
   elapsedMs = 0;
   elapsedInterval: ReturnType<typeof setInterval> | null = null;
@@ -45,7 +44,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUser = this.auth.currentUser;
-    this.asyncDelayMs = 0;
     this.loadDashboard();
   }
 
@@ -69,18 +67,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   loadRecords(delay = this.asyncDelayMs): void {
     this.isLoadingRecords = true;
-    this.recordsError = '';
     this.loadStartTime = Date.now();
     this.startElapsedTimer();
-    this.recordsSvc.loadRecords(delay).pipe(
-      takeUntil(this.destroy$),
-      timeout(15000),
-      catchError(() => {
-        this.recordsError = 'Records are taking too long to load. Please refresh.';
-        return of<ApiResponse<VerificationRecord[]>>({ success: false, data: [] });
-      }),
-      finalize(() => { this.isLoadingRecords = false; this.stopElapsedTimer(); }),
-    ).subscribe({ next: r => { if (r.data) { this.records = r.data; this.lastProcessingTime = r.processingTime ?? null; } } });
+    this.recordsSvc.loadRecords(delay).pipe(takeUntil(this.destroy$), finalize(() => { this.isLoadingRecords = false; this.stopElapsedTimer(); }))
+      .subscribe({ next: r => { if (r.data) { this.records = r.data; this.lastProcessingTime = r.processingTime ?? null; } } });
   }
 
   loadStats(): void {

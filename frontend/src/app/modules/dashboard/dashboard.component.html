@@ -33,9 +33,6 @@
   <div class="perf-note" *ngIf="lastProcessingTime !== null && !isLoadingRecords">
     ⚡ Loaded in <strong>{{ lastProcessingTime }}ms</strong> (incl. {{ asyncDelayMs }}ms delay)
   </div>
-  <div class="error-banner" *ngIf="recordsError && !isLoadingRecords">
-    {{ recordsError }}
-  </div>
 
   <!-- Stats (Admin/Manager) -->
   <app-stats-cards *ngIf="auth.isAdmin || currentUser?.role === 'Manager'" [stats]="stats" [isLoading]="isLoadingStats"></app-stats-cards>
