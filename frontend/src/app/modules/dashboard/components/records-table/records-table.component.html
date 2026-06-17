@@ -1,0 +1,201 @@
+<!-- Records Table -->
+<div class="records-card">
+
+  <div class="records-header">
+    <div class="header-left">
+      <h2 class="section-title">Verification Records</h2>
+      <div class="quick-stats">
+        <span class="qs qs-success">✓ {{ completedCount }} done</span>
+        <span class="qs qs-info">● {{ inProgressCount }} active</span>
+        <span class="qs qs-warning">⏱ {{ pendingCount }} pending</span>
+        <span class="qs qs-error" *ngIf="failedCount > 0">✗ {{ failedCount }} failed</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="search-box">
+        <span class="search-icon">⌕</span>
+        <input
+          class="search-input"
+          type="text"
+          placeholder="Search records…"
+          [(ngModel)]="filterValue"
+          (ngModelChange)="applyFilter($event)"
+        />
+        <button
+          class="clear-btn"
+          *ngIf="filterValue"
+          (click)="applyFilter(''); filterValue=''"
+        >✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div class="table-loading" *ngIf="isLoading">
+    <div class="loading-rows">
+      <div class="loading-row" *ngFor="let i of [1,2,3,4,5]">
+        <div class="skel" style="width:15%"></div>
+        <div class="skel" style="width:22%"></div>
+        <div class="skel" style="width:12%"></div>
+        <div class="skel" style="width:10%"></div>
+        <div class="skel" style="width:8%"></div>
+        <div class="skel" style="width:14%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div class="empty-state" *ngIf="!isLoading && records.length === 0">
+    <div class="empty-icon">⬡</div>
+    <p>No verification records found</p>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper" *ngIf="!isLoading && records.length > 0">
+    <table mat-table [dataSource]="dataSource" matSort class="records-table">
+
+      <!-- ownerId column (admin) -->
+      <ng-container matColumnDef="ownerId">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Owner ID</th>
+        <td mat-cell *matCellDef="let r">
+          <span class="owner-tag">{{ r.ownerId }}</span>
+        </td>
+      </ng-container>
+
+      <!-- candidateName -->
+      <ng-container matColumnDef="candidateName">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Candidate</th>
+        <td mat-cell *matCellDef="let r">
+          <div class="candidate-cell">
+            <div class="candidate-avatar">{{ r.candidateName[0] }}</div>
+            <div>
+              <div class="candidate-name">{{ r.candidateName }}</div>
+              <div class="candidate-email">{{ r.candidateEmail }}</div>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- type -->
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+        <td mat-cell *matCellDef="let r">
+          <span class="type-tag">{{ r.type }}</span>
+        </td>
+      </ng-container>
+
+      <!-- status -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+        <td mat-cell *matCellDef="let r">
+          <span class="status-chip" [ngClass]="statusClass(r.status)">
+            {{ r.status }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- priority -->
+      <ng-container matColumnDef="priority">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Priority</th>
+        <td mat-cell *matCellDef="let r">
+          <span class="priority-dot" [ngClass]="priorityClass(r.priority)">
+            {{ r.priority }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- score -->
+      <ng-container matColumnDef="score">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Score</th>
+        <td mat-cell *matCellDef="let r">
+          <span class="score-badge" *ngIf="r.score !== null" [style.color]="scoreColor(r.score)">
+            {{ r.score }}
+          </span>
+          <span class="score-null" *ngIf="r.score === null">—</span>
+        </td>
+      </ng-container>
+
+      <!-- submittedDate -->
+      <ng-container matColumnDef="submittedDate">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Submitted</th>
+        <td mat-cell *matCellDef="let r">
+          <span class="date-cell">{{ formatDate(r.submittedDate) }}</span>
+        </td>
+      </ng-container>
+
+      <!-- actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let r">
+          <button
+            class="expand-btn"
+            (click)="toggleExpand(r)"
+            [class.active]="expandedRecord?.id === r.id"
+          >
+            {{ expandedRecord?.id === r.id ? '▲' : '▼' }}
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Expanded detail row -->
+      <ng-container matColumnDef="expandedDetail">
+        <td mat-cell *matCellDef="let r" [attr.colspan]="displayedColumns.length">
+          <div class="detail-panel" [@detailExpand]="r.id === expandedRecord?.id ? 'expanded' : 'collapsed'"
+               *ngIf="expandedRecord?.id === r.id">
+            <div class="detail-grid">
+              <div class="detail-item" *ngIf="r.details.institution">
+                <span class="dl">Institution</span>
+                <span class="dv">{{ r.details.institution }}</span>
+              </div>
+              <div class="detail-item" *ngIf="r.details.position">
+                <span class="dl">Position</span>
+                <span class="dv">{{ r.details.position }}</span>
+              </div>
+              <div class="detail-item" *ngIf="r.details.duration">
+                <span class="dl">Duration</span>
+                <span class="dv">{{ r.details.duration }}</span>
+              </div>
+              <div class="detail-item" *ngIf="r.details.result">
+                <span class="dl">Result</span>
+                <span class="dv result">{{ r.details.result }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="dl">Verified By</span>
+                <span class="dv">{{ r.verifiedBy || 'Not yet verified' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="dl">Completed</span>
+                <span class="dv">{{ formatDate(r.completedDate) }}</span>
+              </div>
+            </div>
+            <div class="detail-remarks" *ngIf="r.remarks">
+              <span class="dl">Remarks</span>
+              <p>{{ r.remarks }}</p>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr
+        mat-row
+        *matRowDef="let r; columns: displayedColumns"
+        class="data-row"
+        [class.expanded]="expandedRecord?.id === r.id"
+      ></tr>
+      <tr
+        mat-row
+        *matRowDef="let r; columns: ['expandedDetail']"
+        class="detail-row"
+      ></tr>
+    </table>
+  </div>
+
+  <mat-paginator
+    *ngIf="!isLoading && records.length > 0"
+    [pageSizeOptions]="[5, 10, 25]"
+    pageSize="5"
+    showFirstLastButtons
+  ></mat-paginator>
+
+</div>

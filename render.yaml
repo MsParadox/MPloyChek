@@ -1,0 +1,67 @@
+# ============================================================
+# MPloyChek v4.0 — Render Blueprint (render.yaml)
+# One-click deploy for the Node.js backend.
+# Docs: https://render.com/docs/infrastructure-as-code
+# ============================================================
+services:
+  - type: web
+    name: mploychek-api
+    runtime: node
+    rootDir: backend
+    plan: free
+
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && node dist/index.js
+
+    healthCheckPath: /api/health
+
+    envVars:
+      - key:   NODE_ENV
+        value: production
+
+      - key:   PORT
+        value: "3000"
+
+      # Set manually in Render dashboard after creating Neon DB
+      - key:   DATABASE_URL
+        sync:  false
+
+      - key:   DIRECT_URL
+        sync:  false
+
+      # Render auto-generates a secure value for this
+      - key:   JWT_SECRET
+        generateValue: true
+
+      - key:   JWT_EXPIRES_IN
+        value: "28800"
+
+      - key:   RT_EXPIRES_DAYS
+        value: "7"
+
+      # Set to your Vercel URL after frontend deploy — no trailing slash
+      - key:   ALLOWED_ORIGINS
+        sync:  false
+
+      - key:   FRONTEND_URL
+        sync:  false
+
+      # Brevo (email) — optional, app works without it
+      - key:   BREVO_SMTP_LOGIN
+        sync:  false
+
+      - key:   BREVO_SMTP_PASSWORD
+        sync:  false
+
+      - key:   BREVO_SENDER_EMAIL
+        sync:  false
+
+      # Cloudinary (file uploads)
+      - key:   CLOUDINARY_CLOUD_NAME
+        sync:  false
+
+      - key:   CLOUDINARY_API_KEY
+        sync:  false
+
+      - key:   CLOUDINARY_API_SECRET
+        sync:  false

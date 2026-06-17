@@ -1,0 +1,126 @@
+<!-- MPloyChek Sign Up Page -->
+<div class="login-page">
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="login-container signup-container">
+    <!-- Left panel — branding -->
+    <div class="login-left">
+      <div class="brand-block">
+        <div class="brand-logo"><span class="logo-accent">M</span>PloyChek</div>
+        <p class="brand-tagline">Digital Background Verification Platform</p>
+        <p class="brand-sub">by <strong>Mohit Sharma</strong></p>
+      </div>
+
+      <div class="features-list">
+        <div class="feature-item"><div class="feature-dot"></div><span>Create your free account</span></div>
+        <div class="feature-item"><div class="feature-dot"></div><span>Track verification requests in real time</span></div>
+        <div class="feature-item"><div class="feature-dot"></div><span>Secure, role-based access</span></div>
+      </div>
+
+      <p class="footer-note">MPloyChek · Built by <strong>Mohit Sharma</strong></p>
+    </div>
+
+    <!-- Right panel — form -->
+    <div class="login-right">
+      <div class="form-card">
+        <div class="form-header">
+          <h1 class="form-title">Create Account</h1>
+          <p class="form-subtitle">Sign up to start using MPloyChek</p>
+        </div>
+
+        <div class="error-banner" *ngIf="errorMsg">
+          <span class="error-icon">⚠</span><span>{{ errorMsg }}</span>
+        </div>
+
+        <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" autocomplete="off" novalidate>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">First Name</label>
+              <div class="input-wrapper" [class.has-error]="f['firstName'].invalid && f['firstName'].touched">
+                <input class="input-field" type="text" formControlName="firstName" placeholder="Arjun" />
+              </div>
+              <span class="field-error" *ngIf="f['firstName'].invalid && f['firstName'].touched">First name is required</span>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Last Name</label>
+              <div class="input-wrapper" [class.has-error]="f['lastName'].invalid && f['lastName'].touched">
+                <input class="input-field" type="text" formControlName="lastName" placeholder="Mehta" />
+              </div>
+              <span class="field-error" *ngIf="f['lastName'].invalid && f['lastName'].touched">Last name is required</span>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">User ID</label>
+            <div class="input-wrapper" [class.has-error]="f['userId'].invalid && f['userId'].touched">
+              <span class="input-icon">◉</span>
+              <input class="input-field" type="text" formControlName="userId" placeholder="e.g. arjun001" autocomplete="username" />
+            </div>
+            <span class="field-error" *ngIf="f['userId'].invalid && f['userId'].touched">
+              {{ f['userId'].errors?.['required'] ? 'User ID is required' : f['userId'].errors?.['pattern'] ? 'No spaces allowed' : 'Minimum 4 characters' }}
+            </span>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Email</label>
+            <div class="input-wrapper" [class.has-error]="f['email'].invalid && f['email'].touched">
+              <span class="input-icon">@</span>
+              <input class="input-field" type="email" formControlName="email" placeholder="arjun.mehta@email.com" autocomplete="email" />
+            </div>
+            <span class="field-error" *ngIf="f['email'].invalid && f['email'].touched">Enter a valid email</span>
+          </div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Department <span class="opt">(optional)</span></label>
+              <div class="input-wrapper">
+                <input class="input-field" type="text" formControlName="department" placeholder="Engineering" />
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Phone <span class="opt">(optional)</span></label>
+              <div class="input-wrapper">
+                <input class="input-field" type="tel" formControlName="phone" placeholder="+91-98765 43210" />
+              </div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Password</label>
+            <div class="input-wrapper" [class.has-error]="f['password'].invalid && f['password'].touched">
+              <span class="input-icon">◈</span>
+              <input class="input-field" [type]="showPassword ? 'text' : 'password'" formControlName="password" placeholder="Create a strong password" autocomplete="new-password" />
+              <button type="button" class="toggle-btn" (click)="showPassword = !showPassword">{{ showPassword ? '🙈' : '👁' }}</button>
+            </div>
+            <span class="field-error" *ngIf="f['password'].invalid && f['password'].touched">
+              Min 8 chars, with an uppercase letter, a number and a special character
+            </span>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Confirm Password</label>
+            <div class="input-wrapper" [class.has-error]="(f['confirmPassword'].touched && signupForm.errors?.['mismatch'])">
+              <span class="input-icon">◈</span>
+              <input class="input-field" [type]="showPassword ? 'text' : 'password'" formControlName="confirmPassword" placeholder="Re-enter password" autocomplete="new-password" />
+            </div>
+            <span class="field-error" *ngIf="f['confirmPassword'].touched && signupForm.errors?.['mismatch']">Passwords do not match</span>
+          </div>
+
+          <button class="submit-btn" type="submit" [disabled]="signupForm.invalid || isLoading">
+            <span class="btn-content" *ngIf="!isLoading"><span>Create Account</span><span class="btn-arrow">→</span></span>
+            <span class="btn-content" *ngIf="isLoading"><span class="spinner-dots"><span></span><span></span><span></span></span><span>Creating…</span></span>
+          </button>
+        </form>
+
+        <div class="alt-action">
+          Already have an account?
+          <a routerLink="/auth/login">Sign in</a>
+        </div>
+      </div>
+
+      <p class="footer-note">MPloyChek · Built by <strong>Mohit Sharma</strong></p>
+    </div>
+  </div>
+</div>

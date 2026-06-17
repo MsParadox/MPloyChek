@@ -1,0 +1,62 @@
+.dashboard-page{padding:28px;max-width:1440px;margin:0 auto;display:flex;flex-direction:column;gap:20px;animation:fadeUp .4s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.dash-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.dash-greeting{font-size:26px;font-weight:700;color: var(--t-1);margin:0 0 8px;letter-spacing:-.5px}
+.name-hi{color:var(--accent-teal)}
+.dash-sub{font-size:13px;color:var(--t-4);margin:0;display:flex;align-items:center;gap:10px}
+.role-pill{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  &.admin{background:rgba(245,158,11,.1);color:var(--accent-amber);border:1px solid rgba(245,158,11,.2)}
+  &.manager{background:rgba(139,92,246,.1);color:#a78bfa;border:1px solid rgba(139,92,246,.2)}
+  &.verifier{background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.2)}
+  background:rgba(45,212,191,.1);color:var(--accent-teal);border:1px solid rgba(45,212,191,.2)}
+.dash-controls{display:flex;align-items:center;gap:14px;background:var(--fill-1);border:1px solid var(--line-1);border-radius:14px;padding:12px 18px}
+.delay-ctl{display:flex;align-items:center;gap:8px;label{font-size:11px;color:var(--t-4);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}}
+.mini-slider{width:90px;accent-color:var(--accent-teal);cursor:pointer}
+.delay-val{font-size:12px;font-weight:700;color:var(--accent-amber);min-width:44px}
+.reload-btn{padding:8px 16px;border-radius:8px;border:1px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:var(--accent-teal);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .2s;min-width:100px;text-align:center;
+  &:hover:not(:disabled){background:rgba(45,212,191,.15)}
+  &:disabled{opacity:.6;cursor:not-allowed}}
+
+.async-banner{border-radius:14px;border:1px solid rgba(245,158,11,.2);background:rgba(245,158,11,.05);overflow:hidden}
+.ab-ring+.ab-text+.ab-prog{width:100%;height:3px;background:rgba(245,158,11,.1)}
+.ab-bar{height:100%;background:var(--accent-amber);transition:width .1s linear}
+.async-banner{padding:14px 18px;display:flex;align-items:center;gap:14px}
+.ab-ring{width:24px;height:24px;border-radius:50%;border:2px solid transparent;border-top-color:var(--accent-amber);animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ab-text{flex:1;strong{font-size:13px;color:var(--accent-amber);display:block}span{font-size:12px;color:var(--t-4)}}
+.ab-prog{width:120px;height:6px;background:rgba(245,158,11,.1);border-radius:4px;overflow:hidden;flex-shrink:0}
+.perf-note{font-size:12px;color:var(--t-4);display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.12);align-self:flex-start;strong{color:var(--accent-teal)}}
+
+.personal-kpis{display:flex;gap:12px;flex-wrap:wrap}
+.pk-card{flex:1;min-width:110px;background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:14px;padding:16px;transition:transform .2s;&:hover{transform:translateY(-2px)}}
+.pkv{font-size:28px;font-weight:800;color:var(--t-2);line-height:1}
+.pkl{font-size:12px;color:var(--t-4);margin-top:4px}
+.pk-warn .pkv{color:var(--accent-amber)}.pk-success .pkv{color:var(--status-success)}.pk-error .pkv{color:var(--status-error)}.pk-teal .pkv{color:var(--accent-teal)}
+
+.dash-grid{display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start}
+@media(max-width:900px){.dash-grid{grid-template-columns:1fr}}
+.dash-sidebar{display:flex;flex-direction:column;gap:16px;position:sticky;top:80px}
+.dash-main{display:flex;flex-direction:column;gap:16px}
+
+.flagged-card{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.fc-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#f87171;mat-icon{font-size:17px}}
+.fc-list{display:flex;flex-direction:column;gap:8px}
+.fc-item{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--fill-1);border-radius:10px;cursor:pointer;transition:all .18s;&:hover{background:rgba(239,68,68,.08)}}
+.fc-av{width:30px;height:30px;border-radius:50%;background:rgba(239,68,68,.15);color:var(--status-error);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fc-info{flex:1}
+.fc-name{font-size:12px;font-weight:600;color:var(--t-2)}.fc-risk{font-size:11px;font-weight:600}
+.fc-arrow{color:var(--t-5);font-size:17px!important}
+
+.quick-actions{background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.qa-title{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--t-4);font-weight:700;margin-bottom:4px}
+.qa-btn{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1px solid var(--line-1);background:var(--fill-1);color:var(--t-3);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .18s;text-align:left;mat-icon{font-size:18px;color:var(--t-4)}
+  &:hover{background:rgba(45,212,191,.06);border-color:rgba(45,212,191,.18);color:var(--t-2);mat-icon{color:var(--accent-teal)}}}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.sh-left{display:flex;flex-direction:column;gap:4px}
+.section-title{font-size:17px;font-weight:700;color: var(--t-1);margin:0}
+.status-row{display:flex;gap:10px}
+.sr-item{font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px}
+.sr-pending{background:rgba(245,158,11,.1);color:var(--accent-amber)}
+.sr-overdue{background:rgba(239,68,68,.1);color:var(--status-error)}
+.view-all-btn{padding:8px 16px;border-radius:10px;border:1px solid var(--line-2);background:var(--fill-1);color:var(--t-3);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;&:hover{border-color:rgba(45,212,191,.3);color:var(--accent-teal)}}

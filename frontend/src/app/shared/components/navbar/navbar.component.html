@@ -1,0 +1,83 @@
+<nav class="navbar">
+  <div class="navbar-brand" (click)="navigate('/dashboard')">
+    <div class="brand-mark"><span class="bm-m">M</span></div>
+    <div class="brand-text"><span class="bt-ploy">Ploy</span><span class="bt-chek">Chek</span></div>
+  </div>
+
+  <div class="navbar-nav">
+    <a *ngFor="let item of visibleNavItems" class="nav-link" [class.active]="isActive(item.route)" (click)="navigate(item.route)">
+      <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+      <span>{{ item.label }}</span>
+    </a>
+  </div>
+
+  <!-- Global Search -->
+  <app-global-search class="navbar-search"></app-global-search>
+
+  <div class="navbar-right">
+    <!-- Theme toggle -->
+    <button class="icon-btn" (click)="toggleTheme()" [matTooltip]="theme.isDark ? 'Switch to Light mode' : 'Switch to Dark mode'">
+      <mat-icon>{{ theme.isDark ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <!-- Notifications -->
+    <a class="notif-btn" (click)="navigate('/notifications')" [matTooltip]="unreadCount + ' unread notifications'">
+      <mat-icon>notifications</mat-icon>
+      <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+    </a>
+
+    <!-- WS status -->
+    <div class="ws-dot" [class.connected]="wsConnected" [matTooltip]="wsConnected ? 'Real-time: Connected' : 'Real-time: Disconnected'"></div>
+
+    <div class="role-pill" [class]="'role-' + (currentUser?.role || '').toLowerCase().replace(' ','-')">
+      {{ currentUser?.role }}
+    </div>
+
+    <button class="avatar-btn" [matMenuTriggerFor]="profileMenu">
+      <span class="av-initials">{{ initials }}</span>
+      <span class="av-ring"></span>
+    </button>
+
+    <mat-menu #profileMenu="matMenu" class="profile-menu" xPosition="before">
+      <div class="pm-header">
+        <div class="pm-av">{{ initials }}</div>
+        <div class="pm-info">
+          <div class="pm-name">{{ fullName }}</div>
+          <div class="pm-uid">@{{ currentUser?.userId }}</div>
+          <div class="pm-dept">{{ currentUser?.department }}</div>
+        </div>
+      </div>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="navigate('/dashboard')"><mat-icon>dashboard</mat-icon>Dashboard</button>
+      <button mat-menu-item (click)="navigate('/profile')"><mat-icon>manage_accounts</mat-icon>My Profile</button>
+      <button mat-menu-item (click)="navigate('/notifications')">
+        <mat-icon>notifications</mat-icon>Notifications
+        <span *ngIf="unreadCount > 0" class="badge-inline">{{ unreadCount }}</span>
+      </button>
+      <mat-divider *ngIf="auth.isAdmin"></mat-divider>
+      <button mat-menu-item *ngIf="auth.isAdmin" (click)="navigate('/admin')"><mat-icon>admin_panel_settings</mat-icon>Admin Console</button>
+      <button mat-menu-item *ngIf="auth.isAdmin" (click)="navigate('/reports')"><mat-icon>bar_chart</mat-icon>Reports</button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="toggleTheme()">
+        <mat-icon>{{ theme.isDark ? 'light_mode' : 'dark_mode' }}</mat-icon>
+        {{ theme.isDark ? 'Light Mode' : 'Dark Mode' }}
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item class="logout-item" (click)="logout()"><mat-icon>logout</mat-icon>Sign Out</button>
+    </mat-menu>
+  </div>
+
+  <button class="hamburger" (click)="isMobileMenuOpen = !isMobileMenuOpen">
+    <mat-icon>{{ isMobileMenuOpen ? 'close' : 'menu' }}</mat-icon>
+  </button>
+</nav>
+
+<div class="mobile-menu" [class.open]="isMobileMenuOpen">
+  <a *ngFor="let item of visibleNavItems" class="mob-link" [class.active]="isActive(item.route)" (click)="navigate(item.route)">
+    <mat-icon>{{ item.icon }}</mat-icon>{{ item.label }}
+  </a>
+  <div class="mob-sep"></div>
+  <a class="mob-link" (click)="navigate('/profile')"><mat-icon>manage_accounts</mat-icon>My Profile</a>
+  <a class="mob-link" (click)="toggleTheme()"><mat-icon>{{ theme.isDark ? 'light_mode' : 'dark_mode' }}</mat-icon>{{ theme.isDark ? 'Light Mode' : 'Dark Mode' }}</a>
+  <a class="mob-link logout" (click)="logout()"><mat-icon>logout</mat-icon>Sign Out</a>
+</div>

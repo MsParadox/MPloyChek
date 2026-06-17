@@ -1,0 +1,156 @@
+<div class="page-shell">
+  <div class="ph-row">
+    <div>
+      <div class="breadcrumb"><span routerLink="/dashboard">Home</span><span>›</span><span class="bc-cur">My Profile</span></div>
+      <h1 class="page-title"><mat-icon>manage_accounts</mat-icon>My Profile</h1>
+      <p class="page-sub">Manage your account, security and preferences</p>
+    </div>
+  </div>
+
+  <div class="profile-grid" *ngIf="user">
+    <div class="profile-sidebar">
+      <div class="avatar-card">
+        <div class="big-avatar">{{ initials }}</div>
+        <h2 class="av-name">{{ user.firstName }} {{ user.lastName }}</h2>
+        <div class="av-id">@{{ user.userId }}</div>
+        <div class="av-role" [style.color]="roleColor(user.role)" [style.borderColor]="roleColor(user.role)">{{ user.role }}</div>
+        <div class="av-meta-list">
+          <div class="am-item"><mat-icon>apartment</mat-icon>{{ user.department }}</div>
+          <div class="am-item"><mat-icon>calendar_today</mat-icon>Since {{ memberSince }}</div>
+          <div class="am-item"><mat-icon>schedule</mat-icon>{{ lastLogin }}</div>
+        </div>
+        <div class="status-dot-row"><div class="sd-dot" [class.active]="user.status === 'Active'"></div><span>{{ user.status }}</span></div>
+      </div>
+
+      <div class="sec-card">
+        <div class="card-head"><mat-icon>security</mat-icon>Security Status</div>
+        <div class="sec-rows">
+          <div class="sr"><mat-icon class="sr-icon ok">check_circle</mat-icon>Password configured</div>
+          <div class="sr"><mat-icon class="sr-icon ok">check_circle</mat-icon>JWT session active</div>
+          <div class="sr"><mat-icon class="sr-icon ok">check_circle</mat-icon>Session timeout enabled</div>
+          <div class="sr"><mat-icon class="sr-icon warn">pending</mat-icon>2FA not configured</div>
+        </div>
+      </div>
+
+      <button class="export-btn" (click)="downloadMyData()">
+        <mat-icon>download</mat-icon>Download My Records (CSV)
+      </button>
+    </div>
+
+    <div class="profile-main">
+      <div class="tab-nav">
+        <button class="tab-btn" [class.active]="activeTab===0" (click)="activeTab=0"><mat-icon>person</mat-icon>Personal</button>
+        <button class="tab-btn" [class.active]="activeTab===1" (click)="activeTab=1"><mat-icon>lock</mat-icon>Security</button>
+        <button class="tab-btn" [class.active]="activeTab===2" (click)="activeTab=2"><mat-icon>tune</mat-icon>Preferences</button>
+        <button class="tab-btn" [class.active]="activeTab===3" (click)="activeTab=3"><mat-icon>info</mat-icon>Account</button>
+      </div>
+
+      <!-- Personal Info -->
+      <div class="tab-content" *ngIf="activeTab===0" [formGroup]="profileForm">
+        <div class="section-title">Edit Personal Information</div>
+        <div class="form-grid">
+          <div class="form-field"><label class="fl">First Name *</label><input class="field-inp" formControlName="firstName" /></div>
+          <div class="form-field"><label class="fl">Last Name *</label><input class="field-inp" formControlName="lastName" /></div>
+          <div class="form-field"><label class="fl">Email *</label><input class="field-inp" type="email" formControlName="email" /></div>
+          <div class="form-field"><label class="fl">Phone *</label><input class="field-inp" formControlName="phone" /></div>
+          <div class="form-field full"><label class="fl">Bio</label><textarea class="field-textarea" formControlName="bio" rows="3" placeholder="A short bio about yourself…"></textarea></div>
+        </div>
+        <div class="form-actions"><button class="btn-primary" (click)="saveProfile()" [disabled]="profileForm.invalid||isSaving"><mat-icon>save</mat-icon>{{ isSaving ? 'Saving…' : 'Save Changes' }}</button></div>
+      </div>
+
+      <!-- Security / Change Password -->
+      <div class="tab-content" *ngIf="activeTab===1" [formGroup]="pwForm">
+        <div class="section-title">Change Password</div>
+        <div class="pw-grid">
+          <div class="form-field full">
+            <label class="fl">Current Password *</label>
+            <div class="pw-wrap">
+              <input class="field-inp" [type]="showCurrentPw?'text':'password'" formControlName="currentPassword" placeholder="Enter current password" />
+              <button type="button" class="pw-eye" (click)="showCurrentPw=!showCurrentPw">{{ showCurrentPw ? '🙈' : '👁' }}</button>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="fl">New Password * <span class="pw-strength" [style.color]="pwStrengthColor">{{ pwStrengthLabel }}</span></label>
+            <div class="pw-wrap">
+              <input class="field-inp" [type]="showNewPw?'text':'password'" formControlName="newPassword" placeholder="Minimum 8 characters" />
+              <button type="button" class="pw-eye" (click)="showNewPw=!showNewPw">{{ showNewPw ? '🙈' : '👁' }}</button>
+            </div>
+            <div class="strength-bars">
+              <div *ngFor="let i of [0,1,2,3]" class="sb" [class.filled]="pwStrength > i" [style.background]="pwStrength > i ? pwStrengthColor : ''"></div>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="fl">Confirm New Password *</label>
+            <div class="pw-wrap">
+              <input class="field-inp" [type]="showConfirmPw?'text':'password'" formControlName="confirmPassword" placeholder="Repeat new password" />
+              <button type="button" class="pw-eye" (click)="showConfirmPw=!showConfirmPw">{{ showConfirmPw ? '🙈' : '👁' }}</button>
+            </div>
+            <span class="field-err" *ngIf="pwForm.errors?.['mismatch'] && pwForm.get('confirmPassword')?.touched">Passwords do not match</span>
+          </div>
+        </div>
+        <div class="pw-rules">
+          <div class="pr-title">Password requirements:</div>
+          <div class="pr-item" [class.met]="ruleMinLength()"><mat-icon>{{ ruleMinLength() ? 'check' : 'radio_button_unchecked' }}</mat-icon>At least 8 characters</div>
+          <div class="pr-item" [class.met]="ruleUppercase()"><mat-icon>{{ ruleUppercase() ? 'check' : 'radio_button_unchecked' }}</mat-icon>One uppercase letter</div>
+          <div class="pr-item" [class.met]="ruleNumber()"><mat-icon>{{ ruleNumber() ? 'check' : 'radio_button_unchecked' }}</mat-icon>One number</div>
+          <div class="pr-item" [class.met]="ruleSpecial()"><mat-icon>{{ ruleSpecial() ? 'check' : 'radio_button_unchecked' }}</mat-icon>One special character</div>
+        </div>
+        <div class="form-actions"><button class="btn-danger" (click)="changePassword()" [disabled]="pwForm.invalid||isChangingPw"><mat-icon>lock_reset</mat-icon>{{ isChangingPw ? 'Changing…' : 'Change Password' }}</button></div>
+      </div>
+
+      <!-- Preferences -->
+      <div class="tab-content" *ngIf="activeTab===2" [formGroup]="prefForm">
+        <div class="section-title">Notification & Display Preferences</div>
+        <div class="pref-list">
+          <div class="pref-item">
+            <div class="pi-info"><div class="pi-label">Email Notifications</div><div class="pi-desc">Alerts via email</div></div>
+            <label class="toggle-switch"><input type="checkbox" formControlName="emailNotifications" /><span class="toggle-track"><span class="toggle-thumb"></span></span></label>
+          </div>
+          <div class="pref-item">
+            <div class="pi-info"><div class="pi-label">SMS Notifications</div><div class="pi-desc">Urgent alerts via SMS</div></div>
+            <label class="toggle-switch"><input type="checkbox" formControlName="smsNotifications" /><span class="toggle-track"><span class="toggle-thumb"></span></span></label>
+          </div>
+          <div class="pref-item">
+            <div class="pi-info"><div class="pi-label">Language</div><div class="pi-desc">Display language for the interface</div></div>
+            <select class="lang-sel" formControlName="language">
+              <option value="en">English</option>
+              <option value="hi">हिन्दी (Hindi)</option>
+              <option value="ta">தமிழ் (Tamil)</option>
+              <option value="te">తెలుగు (Telugu)</option>
+              <option value="bn">বাংলা (Bengali)</option>
+              <option value="mr">मराठी (Marathi)</option>
+            </select>
+          </div>
+          <div class="pref-item">
+            <div class="pi-info"><div class="pi-label">Dark Mode</div><div class="pi-desc">Toggle interface theme</div></div>
+            <label class="toggle-switch">
+              <input type="checkbox" [checked]="theme.isDark" (change)="theme.toggle()" />
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </label>
+          </div>
+        </div>
+        <div class="form-actions"><button class="btn-primary" (click)="savePrefs()" [disabled]="isSaving"><mat-icon>save</mat-icon>{{ isSaving ? 'Saving…' : 'Save Preferences' }}</button></div>
+      </div>
+
+      <!-- Account Info -->
+      <div class="tab-content" *ngIf="activeTab===3">
+        <div class="section-title">Account Information</div>
+        <div class="info-rows">
+          <div class="ir"><span class="irl">User ID</span><code class="irv-code">{{ user.userId }}</code></div>
+          <div class="ir"><span class="irl">Internal ID</span><code class="irv-code">{{ user.id }}</code></div>
+          <div class="ir"><span class="irl">Role</span><span class="irv" [style.color]="roleColor(user.role)">{{ user.role }}</span></div>
+          <div class="ir"><span class="irl">Department</span><span class="irv">{{ user.department }}</span></div>
+          <div class="ir"><span class="irl">Status</span><span class="irv" [class.green]="user.status==='Active'">{{ user.status }}</span></div>
+          <div class="ir"><span class="irl">Joined</span><span class="irv">{{ memberSince }}</span></div>
+          <div class="ir"><span class="irl">Last Login</span><span class="irv">{{ lastLogin }}</span></div>
+        </div>
+        <div class="data-section">
+          <div class="ds-title">Data & Privacy</div>
+          <p class="ds-desc">Download all verification records associated with your account in CSV format.</p>
+          <button class="btn-outline" (click)="downloadMyData()"><mat-icon>download</mat-icon>Download My Data</button>
+        </div>
+        <div class="read-only-note"><mat-icon>info</mat-icon>Account metadata is managed by system administrators.</div>
+      </div>
+    </div>
+  </div>
+</div>

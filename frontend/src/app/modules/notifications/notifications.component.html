@@ -1,0 +1,55 @@
+<div class="page-shell">
+  <div class="ph-row">
+    <div>
+      <div class="breadcrumb"><span routerLink="/dashboard">Home</span><span>›</span><span class="bc-cur">Notifications</span></div>
+      <h1 class="page-title"><mat-icon>notifications</mat-icon>Notifications
+        <span class="unread-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+      </h1>
+    </div>
+    <button class="btn-ghost" (click)="markAllRead()" [disabled]="unreadCount === 0"><mat-icon>done_all</mat-icon>Mark all read</button>
+  </div>
+
+  <!-- Filter chips -->
+  <div class="filter-chips">
+    <button class="fchip" [class.active]="filter==='all'" (click)="filter='all'">All ({{ notifications.length }})</button>
+    <button class="fchip" [class.active]="filter==='unread'" (click)="filter='unread'">Unread ({{ unreadCount }})</button>
+    <button class="fchip fchip-error" [class.active]="filter==='error'" (click)="filter='error'">Alerts</button>
+    <button class="fchip fchip-warning" [class.active]="filter==='warning'" (click)="filter='warning'">Warnings</button>
+    <button class="fchip fchip-success" [class.active]="filter==='success'" (click)="filter='success'">Success</button>
+    <button class="fchip fchip-info" [class.active]="filter==='info'" (click)="filter='info'">Info</button>
+  </div>
+
+  <div class="notif-list-card">
+    <div class="loading-row" *ngIf="isLoading">
+      <div class="mini-spinner"></div> Loading notifications…
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && filtered.length === 0">
+      <mat-icon>notifications_none</mat-icon>
+      <h3>No notifications</h3>
+      <p>You're all caught up!</p>
+    </div>
+
+    <div class="notif-item" *ngFor="let n of filtered"
+         [class.unread]="!n.read"
+         (click)="openLink(n)">
+      <div class="ni-icon" [style.background]="typeColor(n.type) + '18'" [style.color]="typeColor(n.type)">
+        <mat-icon>{{ typeIcon(n.type) }}</mat-icon>
+      </div>
+      <div class="ni-body">
+        <div class="ni-title">{{ n.title }}</div>
+        <div class="ni-msg">{{ n.message }}</div>
+        <div class="ni-meta">
+          <span class="ni-time">{{ formatTime(n.createdAt) }}</span>
+          <span class="ni-link" *ngIf="n.link"><mat-icon>open_in_new</mat-icon>View</span>
+        </div>
+      </div>
+      <div class="ni-right">
+        <div class="unread-dot" *ngIf="!n.read"></div>
+        <button class="read-btn" *ngIf="!n.read" (click)="markRead(n); $event.stopPropagation()">
+          <mat-icon>check</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

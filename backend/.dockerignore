@@ -1,0 +1,11 @@
+node_modules
+dist
+src/data/db.json
+*.log
+.env
+coverage
+__tests__
+*.spec.ts
+.git
+.gitignore
+README.md

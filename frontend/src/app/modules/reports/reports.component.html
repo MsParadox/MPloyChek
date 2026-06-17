@@ -1,0 +1,143 @@
+<div class="page-shell">
+  <div class="ph-row">
+    <div>
+      <div class="breadcrumb"><span routerLink="/dashboard">Home</span><span>›</span><span class="bc-cur">Reports & Analytics</span></div>
+      <h1 class="page-title"><mat-icon>bar_chart</mat-icon>Reports & Analytics</h1>
+      <p class="page-sub">Platform-wide insights and performance metrics</p>
+    </div>
+    <div class="export-btn-wrap">
+      <div class="export-group">
+        <button class="btn-primary" (click)="exportRecords()"><mat-icon>download</mat-icon>Records CSV</button>
+        <button class="btn-secondary" (click)="exportCandidates()"><mat-icon>people</mat-icon>Candidates CSV</button>
+        <button class="btn-secondary" (click)="exportAudit()"><mat-icon>history</mat-icon>Audit Log CSV</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="analytics-loading" *ngIf="isLoading">
+    <div class="al-ring"></div>
+    <p>Fetching analytics data…</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading && overview">
+    <!-- Summary KPI Row -->
+    <div class="kpi-row-6">
+      <div class="kpi6 kpi-teal"><div class="kp6-icon"><mat-icon>assignment</mat-icon></div><div class="kp6-val">{{ overview.summary.totalRecords }}</div><div class="kp6-lbl">Total Records</div></div>
+      <div class="kpi6 kpi-green"><div class="kp6-icon"><mat-icon>check_circle</mat-icon></div><div class="kp6-val">{{ overview.summary.completionRate }}%</div><div class="kp6-lbl">Completion Rate</div></div>
+      <div class="kpi6 kpi-blue"><div class="kp6-icon"><mat-icon>people</mat-icon></div><div class="kp6-val">{{ overview.summary.totalCandidates }}</div><div class="kp6-lbl">Candidates</div></div>
+      <div class="kpi6 kpi-amber"><div class="kp6-icon"><mat-icon>grade</mat-icon></div><div class="kp6-val">{{ overview.summary.avgScore }}</div><div class="kp6-lbl">Avg Score</div></div>
+      <div class="kpi6 kpi-purple"><div class="kp6-icon"><mat-icon>attach_money</mat-icon></div><div class="kp6-val">{{ formatCurrency(overview.summary.totalRevenue) }}</div><div class="kp6-lbl">Revenue</div></div>
+      <div class="kpi6 kpi-red"><div class="kp6-icon"><mat-icon>warning</mat-icon></div><div class="kp6-val">{{ overview.summary.highRisk }}</div><div class="kp6-lbl">High Risk</div></div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <!-- Status Distribution -->
+      <div class="chart-card">
+        <div class="chart-title"><mat-icon>donut_large</mat-icon>Records by Status</div>
+        <div class="donut-chart">
+          <svg viewBox="0 0 120 120" class="donut-svg">
+            <circle cx="60" cy="60" r="45" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="18"/>
+            <ng-container *ngFor="let entry of byStatusEntries; let i = index">
+              <circle cx="60" cy="60" r="45" fill="none" [attr.stroke]="statusColor(entry[0])" stroke-width="18"
+                [attr.stroke-dasharray]="donutDashArray(+entry[1])"
+                [attr.stroke-dashoffset]="donutDashOffset(i)"
+                stroke-linecap="round"/>
+            </ng-container>
+            <text x="60" y="56" text-anchor="middle" fill="white" font-size="18" font-weight="800">{{ overview.summary.totalRecords }}</text>
+            <text x="60" y="70" text-anchor="middle" fill="rgba(255,255,255,.4)" font-size="8">records</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="dl-item" *ngFor="let entry of byStatusEntries">
+              <div class="dl-dot" [style.background]="statusColor(entry[0])"></div>
+              <span class="dl-label">{{ entry[0] }}</span>
+              <span class="dl-val">{{ entry[1] }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Record Types -->
+      <div class="chart-card">
+        <div class="chart-title"><mat-icon>bar_chart</mat-icon>Checks by Type</div>
+        <div class="bar-chart">
+          <div class="bc-row" *ngFor="let entry of byTypeEntries; let i = index">
+            <div class="bc-label">{{ entry[0].replace(' Verification','').replace(' Check','') }}</div>
+            <div class="bc-bar-wrap">
+              <div class="bc-bar" [style.width.%]="pct(+entry[1], totalByType)" [style.background]="typeColor(i)"></div>
+            </div>
+            <span class="bc-val">{{ entry[1] }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Risk Distribution -->
+      <div class="chart-card">
+        <div class="chart-title"><mat-icon>security</mat-icon>Candidate Risk Levels</div>
+        <div class="risk-chart">
+          <div class="rc-item" *ngFor="let r of [['Low',overview.byRisk.Low],['Medium',overview.byRisk.Medium],['High',overview.byRisk.High],['Critical',overview.byRisk.Critical]]">
+            <div class="rci-top">
+              <span class="rci-label" [style.color]="riskColor(r[0].toString())">{{ r[0] }}</span>
+              <span class="rci-count">{{ r[1] }}</span>
+            </div>
+            <div class="rci-bar"><div class="rci-fill" [style.width.%]="pct(+r[1], overview.summary.totalCandidates)" [style.background]="riskColor(r[0].toString())"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Trend -->
+    <div class="trend-card">
+      <div class="chart-title"><mat-icon>trending_up</mat-icon>Monthly Verification Trends (6 Months)</div>
+      <div class="trend-chart">
+        <div class="tc-bars">
+          <div class="tc-month" *ngFor="let m of overview.monthlyTrends">
+            <div class="tc-bar-wrap">
+              <div class="tc-bar completed" [style.height.px]="m.completed * 8" matTooltip="Completed: {{ m.completed }}"></div>
+              <div class="tc-bar pending" [style.height.px]="m.pending * 8" matTooltip="In Progress: {{ m.pending }}"></div>
+              <div class="tc-bar failed" [style.height.px]="m.failed * 8" matTooltip="Failed: {{ m.failed }}"></div>
+            </div>
+            <div class="tc-label">{{ m.month }}</div>
+            <div class="tc-total">{{ m.total }}</div>
+          </div>
+        </div>
+        <div class="tc-legend">
+          <span class="tl-item"><span class="tl-dot completed"></span>Completed</span>
+          <span class="tl-item"><span class="tl-dot pending"></span>In Progress</span>
+          <span class="tl-item"><span class="tl-dot failed"></span>Failed</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom row: Priority + Audit -->
+    <div class="bottom-row">
+      <!-- Priority distribution -->
+      <div class="chart-card">
+        <div class="chart-title"><mat-icon>flag</mat-icon>Priority Distribution</div>
+        <div class="priority-dist">
+          <div class="pd-item" *ngFor="let p of [['Critical','#f87171'],['High','var(--status-error)'],['Medium','var(--accent-amber)'],['Low','var(--status-success)']]">
+            <div class="pd-circle" [style.borderColor]="p[1]" [style.color]="p[1]">{{ overview.byPriority[p[0]] || 0 }}</div>
+            <div class="pd-label">{{ p[0] }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="activity-card">
+        <div class="chart-title"><mat-icon>history</mat-icon>Recent Activity</div>
+        <div class="activity-list">
+          <div class="al-item" *ngFor="let log of overview.recentActivity.slice(0,8)">
+            <div class="ali-dot" [style.background]="actionColor(log.action)"></div>
+            <div class="ali-info">
+              <div class="ali-action">{{ log.action.replace('_',' ') }}</div>
+              <div class="ali-meta">{{ log.performedByName }} · {{ formatTimestamp(log.timestamp) }}</div>
+            </div>
+            <div class="ali-status" [class.success]="log.success" [class.fail]="!log.success">{{ log.success ? '✓' : '✗' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+</div>

@@ -1,0 +1,330 @@
+// ============================================================
+// MPloyChek— Prisma Schema
+// Database: PostgreSQL (Neon)
+// Author: Mohit Sharma
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Neon requires this for migrations
+}
+
+// ── Enums ────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  VERIFIER
+  GENERAL_USER
+  @@map("user_role")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+  @@map("user_status")
+}
+
+enum CandidateStatus {
+  ACTIVE
+  ARCHIVED
+  FLAGGED
+  @@map("candidate_status")
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+  @@map("risk_level")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+  @@map("priority")
+}
+
+// FIX Priority 8: Proper verification workflow enum
+enum RecordStatus {
+  PENDING
+  IN_REVIEW
+  VERIFICATION_RUNNING
+  IN_PROGRESS
+  COMPLETED
+  APPROVED
+  REJECTED
+  FAILED
+  ON_HOLD
+  CANCELLED
+  @@map("record_status")
+}
+
+// ── Models ───────────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(uuid())
+  userId       String     @unique @map("user_id")
+  firstName    String     @map("first_name")
+  lastName     String     @map("last_name")
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  role         UserRole   @default(GENERAL_USER)
+  department   String
+  phone        String
+  bio          String?
+  // FIX Priority 2: joinDate was String, now DateTime
+  joinDate     DateTime   @default(now()) @map("join_date")
+  status       UserStatus @default(ACTIVE)
+  lastLogin    DateTime?  @map("last_login")
+
+  // Preferences (flattened — avoids JSON column)
+  emailNotifications Boolean @default(true)  @map("email_notifications")
+  smsNotifications   Boolean @default(false) @map("sms_notifications")
+  language           String  @default("en")
+  theme              String  @default("dark")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
+  // Relations
+  requestedRecords   Record[]       @relation("RequestedBy")
+  ownedRecords       Record[]       @relation("OwnedBy")
+  verifiedRecords    Record[]       @relation("VerifiedBy")
+  assignedCandidates Candidate[]    @relation("AssignedTo")
+  createdCandidates  Candidate[]    @relation("CreatedBy")
+  notifications      Notification[]
+  refreshTokens      RefreshToken[]
+  auditLogs          AuditLog[]
+
+  @@index([userId])
+  @@index([email])
+  @@index([status])
+  @@index([role])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique @map("token_hash") // store hashed, never raw
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model Candidate {
+  id             String          @id @default(uuid())
+  firstName      String          @map("first_name")
+  lastName       String          @map("last_name")
+  email          String
+  phone          String
+  // FIX Priority 2: dateOfBirth was String, now DateTime @db.Date
+  dateOfBirth    DateTime        @db.Date @map("date_of_birth")
+  nationality    String          @default("Indian")
+  currentAddress String          @map("current_address")
+  riskScore      Int             @default(0) @map("risk_score")
+  riskLevel      RiskLevel       @default(LOW) @map("risk_level")
+  consentGiven   Boolean         @default(false) @map("consent_given")
+  consentDate    DateTime?       @map("consent_date")
+  notes          String?
+  tags           String[]
+  status         CandidateStatus @default(ACTIVE)
+
+  assignedToId String? @map("assigned_to_id")
+  createdById  String  @map("created_by_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
+  // Relations
+  assignedTo        User?             @relation("AssignedTo", fields: [assignedToId], references: [id])
+  createdBy         User              @relation("CreatedBy", fields: [createdById], references: [id])
+  records           Record[]
+  education         Education[]
+  employment        Employment[]
+  documents         Document[]
+  previousAddresses PreviousAddress[]
+
+  @@index([email])
+  @@index([status])
+  @@index([riskLevel])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@map("candidates")
+}
+
+model Education {
+  id          String    @id @default(uuid())
+  candidateId String    @map("candidate_id")
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  institution String
+  degree      String
+  field       String
+  startYear   Int       @map("start_year")
+  endYear     Int?      @map("end_year")
+  verified    Boolean   @default(false)
+
+  @@index([candidateId])
+  @@map("education")
+}
+
+model Employment {
+  id           String    @id @default(uuid())
+  candidateId  String    @map("candidate_id")
+  candidate    Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  company      String
+  position     String
+  // FIX Priority 2: startDate/endDate were String, now DateTime @db.Date
+  startDate    DateTime  @db.Date @map("start_date")
+  endDate      DateTime? @db.Date @map("end_date")
+  current      Boolean   @default(false)
+  verified     Boolean   @default(false)
+  contactName  String    @map("contact_name")
+  contactPhone String    @map("contact_phone")
+
+  @@index([candidateId])
+  @@map("employment")
+}
+
+model PreviousAddress {
+  id          String    @id @default(uuid())
+  candidateId String    @map("candidate_id")
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  address     String
+
+  @@map("previous_addresses")
+}
+
+// Priority 3: Document model (already in schema, now backed by routes)
+model Document {
+  id          String    @id @default(uuid())
+  candidateId String    @map("candidate_id")
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  name        String
+  type        String    // PAN, Aadhaar, Resume, Degree, etc.
+  // FIX: Use local path or Cloudinary URL instead of s3Key/s3Url
+  storagePath String    @map("storage_path")  // local path or cloudinary public_id
+  storageUrl  String    @map("storage_url")   // accessible URL
+  mimeType    String    @default("application/octet-stream") @map("mime_type")
+  sizeBytes   Int       @map("size_bytes")
+  uploadedBy  String    @map("uploaded_by")   // userId who uploaded
+  uploadedAt  DateTime  @default(now()) @map("uploaded_at")
+
+  @@index([candidateId])
+  @@map("documents")
+}
+
+model Record {
+  id            String   @id @default(uuid())
+  candidateId   String   @map("candidate_id")
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  ownerId       String   @map("owner_id")
+  owner         User     @relation("OwnedBy",      fields: [ownerId],       references: [id])
+  requestedById String   @map("requested_by_id")
+  requestedBy   User     @relation("RequestedBy",  fields: [requestedById], references: [id])
+  verifiedById  String?  @map("verified_by_id")
+  verifiedBy    User?    @relation("VerifiedBy",   fields: [verifiedById],  references: [id])
+
+  type     String       @default("Employment Verification")
+  // FIX Priority 8: Use proper RecordStatus enum
+  status   RecordStatus @default(PENDING)
+
+  priority Priority @default(MEDIUM)
+
+  // FIX Priority 2: date fields were String, now DateTime
+  submittedDate DateTime  @default(now()) @map("submitted_date")
+  dueDate       DateTime  @map("due_date")
+  completedDate DateTime? @map("completed_date")
+
+  remarks       String?
+  score         Int?
+  details       Json?   @default("{}")
+  tags          String[]
+  billingCode   String  @map("billing_code")
+  estimatedCost Int     @default(1000) @map("estimated_cost")
+  actualCost    Int?    @map("actual_cost")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
+  // Relations
+  timeline TimelineEvent[]
+
+  @@index([candidateId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([type])
+  @@index([priority])
+  @@index([createdAt])
+  @@map("records")
+}
+
+model TimelineEvent {
+  id          String   @id @default(uuid())
+  recordId    String   @map("record_id")
+  record      Record   @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  event       String
+  description String
+  performedBy String   @map("performed_by")
+  status      String
+  icon        String
+  date        DateTime @default(now())
+
+  @@index([recordId])
+  @@map("timeline_events")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("info") // info | success | warning | error
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id              String   @id @default(uuid())
+  action          String
+  performedById   String   @map("performed_by_id")
+  performedBy     User     @relation(fields: [performedById], references: [id])
+  performedByName String   @map("performed_by_name")
+  targetId        String   @map("target_id")
+  targetType      String   @map("target_type")
+  details         String
+  ipAddress       String   @map("ip_address")
+  userAgent       String   @map("user_agent")
+  success         Boolean  @default(true)
+  timestamp       DateTime @default(now())
+
+  @@index([performedById])
+  @@index([action])
+  @@index([timestamp])
+  @@index([targetType])
+  @@map("audit_logs")
+}

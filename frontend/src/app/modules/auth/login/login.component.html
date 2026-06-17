@@ -1,0 +1,181 @@
+<!-- MPloyChek Login Page -->
+
+<div class="login-page">
+  <!-- Animated background -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="login-container">
+
+    <!-- Left panel — branding -->
+    <div class="login-left">
+      <div class="brand-block">
+        <div class="brand-logo">
+          <span class="logo-accent">M</span>PloyChek
+        </div>
+        <p class="brand-tagline">Digital Background Verification Platform</p>
+        <p class="brand-sub">by <strong>Mohit Sharma</strong></p>
+      </div>
+
+      <div class="features-list">
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <span>Role-based access control</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <span>Real-time verification tracking</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <span>Async API processing showcase</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <span>Admin user management console</span>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-val">5+</div>
+          <div class="stat-lbl">Users</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">8</div>
+          <div class="stat-lbl">Records</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">6</div>
+          <div class="stat-lbl">Check Types</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel — login form -->
+    <div class="login-right">
+      <div class="form-card">
+        <div class="form-header">
+          <h1 class="form-title">Sign In</h1>
+          <p class="form-subtitle">Enter your credentials to access the portal</p>
+        </div>
+
+        <!-- Error banner -->
+        <div class="error-banner" *ngIf="errorMsg">
+          <span class="error-icon">⚠</span>
+          <span>{{ errorMsg }}</span>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" autocomplete="off" novalidate>
+
+          <!-- User ID -->
+          <div class="field-group">
+            <label class="field-label">User ID</label>
+            <div class="input-wrapper" [class.has-error]="f['userId'].invalid && f['userId'].touched">
+              <span class="input-icon">◉</span>
+              <input
+                class="input-field"
+                type="text"
+                formControlName="userId"
+                placeholder="e.g. mohit001"
+                autocomplete="username"
+              />
+            </div>
+            <span class="field-error" *ngIf="f['userId'].invalid && f['userId'].touched">
+              {{ f['userId'].errors?.['required'] ? 'User ID is required' : 'Minimum 4 characters' }}
+            </span>
+          </div>
+
+          <!-- Password -->
+          <div class="field-group">
+            <label class="field-label">Password</label>
+            <div class="input-wrapper" [class.has-error]="f['password'].invalid && f['password'].touched">
+              <span class="input-icon">◈</span>
+              <input
+                class="input-field"
+                [type]="showPassword ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="Enter password"
+                autocomplete="current-password"
+              />
+              <button type="button" class="toggle-btn" (click)="showPassword = !showPassword">
+                {{ showPassword ? '🙈' : '👁' }}
+              </button>
+            </div>
+            <span class="field-error" *ngIf="f['password'].invalid && f['password'].touched">
+              {{ f['password'].errors?.['required'] ? 'Password is required' : 'Minimum 6 characters' }}
+            </span>
+          </div>
+
+          <!-- Async delay slider (per requirement: showcase async processing) -->
+          <div class="field-group delay-group">
+            <label class="field-label">
+              API Delay Demo
+              <span class="delay-badge">{{ f['delay'].value }}ms</span>
+            </label>
+            <input
+              class="delay-slider"
+              type="range"
+              formControlName="delay"
+              min="0" max="3000" step="100"
+            />
+            <span class="delay-hint">Drag to simulate async API latency</span>
+          </div>
+
+          <!-- Submit -->
+          <button
+            class="submit-btn"
+            type="submit"
+            [disabled]="loginForm.invalid || isLoading"
+          >
+            <span class="btn-content" *ngIf="!isLoading">
+              <span>Sign In</span>
+              <span class="btn-arrow">→</span>
+            </span>
+            <span class="btn-content" *ngIf="isLoading">
+              <span class="spinner-dots">
+                <span></span><span></span><span></span>
+              </span>
+              <span>Authenticating…</span>
+            </span>
+          </button>
+
+          <!-- Processing time -->
+          <div class="processing-info" *ngIf="processingMs > 0 && !isLoading">
+            ⚡ Authenticated in <strong>{{ processingMs }}ms</strong>
+          </div>
+
+        </form>
+
+        <!-- Demo credentials — role shown as hint only, never sent to server -->
+        <div class="demo-panel">
+          <div class="demo-label">Quick demo login →</div>
+          <div class="demo-chips">
+            <button
+              *ngFor="let cred of demoCredentials"
+              class="demo-chip"
+              [class.admin-chip]="cred.roleHint === 'Admin'"
+              type="button"
+              (click)="fillDemo(cred)"
+              [title]="'Role: ' + cred.roleHint + ' (set by server)'"
+            >
+              <span class="chip-icon">{{ cred.roleHint === 'Admin' ? '◈' : '◉' }}</span>
+              {{ cred.userId }}
+              <span class="chip-role">{{ cred.roleHint }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="alt-action">
+          Don't have an account?
+          <a routerLink="/auth/signup">Create one</a>
+        </div>
+      </div>
+
+      <p class="footer-note">
+        MPloyChek · Built by <strong>Mohit Sharma</strong>
+      </p>
+    </div>
+  </div>
+</div>

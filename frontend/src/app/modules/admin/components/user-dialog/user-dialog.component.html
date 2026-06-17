@@ -1,0 +1,144 @@
+<!-- User Create/Edit Dialog -->
+<div class="dialog-shell">
+
+  <div class="dialog-header">
+    <div class="dialog-title">
+      <span class="dialog-icon">{{ isEdit ? '✎' : '＋' }}</span>
+      <h2>{{ title }}</h2>
+    </div>
+    <button class="close-btn" (click)="cancel()">✕</button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="dialog-form" novalidate>
+
+    <!-- Row 1: userId + role -->
+    <div class="form-row">
+      <div class="field-group">
+        <label class="field-label">User ID *</label>
+        <input
+          class="field-input"
+          formControlName="userId"
+          placeholder="e.g. john007"
+          [class.error]="f['userId'].invalid && f['userId'].touched"
+        />
+        <span class="field-err" *ngIf="f['userId'].invalid && f['userId'].touched">
+          {{ f['userId'].errors?.['required'] ? 'Required' : f['userId'].errors?.['pattern'] ? 'No spaces allowed' : 'Min 4 chars' }}
+        </span>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Role *</label>
+        <select class="field-select" formControlName="role">
+          <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Row 2: firstName + lastName -->
+    <div class="form-row">
+      <div class="field-group">
+        <label class="field-label">First Name *</label>
+        <input
+          class="field-input"
+          formControlName="firstName"
+          placeholder="John"
+          [class.error]="f['firstName'].invalid && f['firstName'].touched"
+        />
+        <span class="field-err" *ngIf="f['firstName'].invalid && f['firstName'].touched">Required</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Last Name *</label>
+        <input
+          class="field-input"
+          formControlName="lastName"
+          placeholder="Doe"
+          [class.error]="f['lastName'].invalid && f['lastName'].touched"
+        />
+        <span class="field-err" *ngIf="f['lastName'].invalid && f['lastName'].touched">Required</span>
+      </div>
+    </div>
+
+    <!-- Email -->
+    <div class="field-group">
+      <label class="field-label">Email *</label>
+      <input
+        class="field-input"
+        type="email"
+        formControlName="email"
+        placeholder="john.doe@example.com"
+        [class.error]="f['email'].invalid && f['email'].touched"
+      />
+      <span class="field-err" *ngIf="f['email'].invalid && f['email'].touched">Valid email required</span>
+    </div>
+
+    <!-- Row 3: department + phone -->
+    <div class="form-row">
+      <div class="field-group">
+        <label class="field-label">Department *</label>
+        <select class="field-select" formControlName="department">
+          <option *ngFor="let d of departments" [value]="d">{{ d }}</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Phone *</label>
+        <input
+          class="field-input"
+          formControlName="phone"
+          placeholder="+91-9876500000"
+          [class.error]="f['phone'].invalid && f['phone'].touched"
+        />
+        <span class="field-err" *ngIf="f['phone'].invalid && f['phone'].touched">Required</span>
+      </div>
+    </div>
+
+    <!-- Password (create only) -->
+    <div class="field-group" *ngIf="!isEdit">
+      <label class="field-label">Password *</label>
+      <div class="pw-wrapper">
+        <input
+          class="field-input"
+          [type]="showPassword ? 'text' : 'password'"
+          formControlName="password"
+          placeholder="Min 8 characters"
+          [class.error]="f['password'].invalid && f['password'].touched"
+        />
+        <button type="button" class="pw-toggle" (click)="showPassword = !showPassword">
+          {{ showPassword ? '🙈' : '👁' }}
+        </button>
+      </div>
+      <span class="field-err" *ngIf="f['password'].invalid && f['password'].touched">
+        {{ f['password'].errors?.['required'] ? 'Required' : 'Min 8 characters' }}
+      </span>
+    </div>
+
+    <!-- Status (edit only) -->
+    <div class="field-group" *ngIf="isEdit">
+      <label class="field-label">Status</label>
+      <div class="status-toggle">
+        <label
+          *ngFor="let s of ['Active', 'Inactive', 'Suspended']"
+          class="status-opt"
+          [class.active]="f['status'].value === s"
+          [class]="'status-opt status-opt-' + s.toLowerCase()"
+        >
+          <input type="radio" formControlName="status" [value]="s" hidden />
+          {{ s }}
+        </label>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="dialog-actions">
+      <button type="button" class="btn-cancel" (click)="cancel()">Cancel</button>
+      <button
+        type="submit"
+        class="btn-submit"
+        [disabled]="form.invalid || isLoading"
+      >
+        <span *ngIf="!isLoading">{{ isEdit ? 'Save Changes' : 'Create User' }}</span>
+        <span *ngIf="isLoading">Processing…</span>
+      </button>
+    </div>
+
+  </form>
+</div>

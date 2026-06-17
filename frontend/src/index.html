@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070b14" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#eef2f7" media="(prefers-color-scheme: light)" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>MPloyChek — Digital Background Verification</title>
+  <meta name="description" content="MPloyChek: Digital background verification platform by Mohit Sharma" />
+  <meta name="author" content="Mohit Sharma" />
+
+  <!-- Material Icons CDN -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <style>
+    /* Initial loading screen before Angular bootstraps */
+    #app-bootstrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #070b14;
+      color: rgba(255,255,255,0.6);
+      font-family: 'DM Sans', sans-serif;
+      gap: 20px;
+    }
+    #app-bootstrap .boot-logo {
+      font-size: 32px;
+      font-weight: 800;
+      color: #fff;
+    }
+    #app-bootstrap .boot-logo span { color: #2dd4bf; }
+    #app-bootstrap .boot-ring {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 2px solid rgba(45,212,191,0.2);
+      border-top-color: #2dd4bf;
+      animation: bootSpin 0.8s linear infinite;
+    }
+    @keyframes bootSpin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <app-root>
+    <!-- Bootstrap loading state -->
+    <div id="app-bootstrap">
+      <div class="boot-logo"><span>M</span>PloyChek</div>
+      <div class="boot-ring"></div>
+      <p style="font-size:13px;opacity:.5">Loading application…</p>
+    </div>
+  </app-root>
+</body>
+</html>

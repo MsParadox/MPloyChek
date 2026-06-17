@@ -1,0 +1,91 @@
+<!-- User Profile Card -->
+<div class="profile-card">
+
+  <!-- Skeleton -->
+  <div class="skeleton-wrap" *ngIf="isLoading">
+    <div class="skel skel-avatar"></div>
+    <div class="skel skel-name"></div>
+    <div class="skel skel-text"></div>
+    <div class="skel skel-text short"></div>
+  </div>
+
+  <!-- Content -->
+  <ng-container *ngIf="!isLoading && user">
+    <div class="profile-top">
+      <div class="avatar-ring">
+        <div class="avatar">{{ initials }}</div>
+        <div class="status-dot" [style.background]="statusColor"></div>
+      </div>
+      <div class="profile-names">
+        <h3 class="name">{{ fullName }}</h3>
+        <span class="user-id">@{{ user.userId }}</span>
+      </div>
+    </div>
+
+    <div class="role-display" [class.admin]="user.role === 'Admin'">
+      <span class="role-icon">{{ user.role === 'Admin' ? '◈' : '◉' }}</span>
+      {{ user.role }}
+    </div>
+
+    <div class="profile-stats">
+      <div class="pstat">
+        <div class="pstat-val">{{ recordCount }}</div>
+        <div class="pstat-lbl">Records</div>
+      </div>
+      <div class="pstat-divider"></div>
+      <div class="pstat">
+        <div class="pstat-val" [class.warn]="pendingCount > 0">{{ pendingCount }}</div>
+        <div class="pstat-lbl">Pending</div>
+      </div>
+      <div class="pstat-divider"></div>
+      <div class="pstat">
+        <div class="pstat-val success">{{ recordCount - pendingCount }}</div>
+        <div class="pstat-lbl">Done</div>
+      </div>
+    </div>
+
+    <div class="info-list">
+      <div class="info-row">
+        <span class="info-icon">✉</span>
+        <div>
+          <div class="info-label">Email</div>
+          <div class="info-val">{{ user.email }}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">☎</span>
+        <div>
+          <div class="info-label">Phone</div>
+          <div class="info-val">{{ user.phone }}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">◧</span>
+        <div>
+          <div class="info-label">Department</div>
+          <div class="info-val">{{ user.department }}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">◷</span>
+        <div>
+          <div class="info-label">Last Login</div>
+          <div class="info-val">{{ lastLoginDisplay }}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">◉</span>
+        <div>
+          <div class="info-label">Member Since</div>
+          <div class="info-val">{{ memberSince }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <span class="status-dot-inline" [style.background]="statusColor"></span>
+      Status: <strong>{{ user.status }}</strong>
+    </div>
+  </ng-container>
+
+</div>

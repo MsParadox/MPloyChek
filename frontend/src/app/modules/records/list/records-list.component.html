@@ -1,0 +1,125 @@
+<div class="page-shell">
+  <!-- Page Header -->
+  <div class="ph-row">
+    <div>
+      <div class="breadcrumb"><span routerLink="/dashboard">Home</span><span>›</span><span class="bc-cur">Records</span></div>
+      <h1 class="page-title"><mat-icon>assignment</mat-icon>Verification Records</h1>
+      <p class="page-sub">Track and manage all background verification checks</p>
+    </div>
+    <button class="btn-primary" (click)="newRequest()"><mat-icon>add</mat-icon>New Request</button>
+  </div>
+
+  <!-- KPI Bar -->
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="kpi-val">{{ totalCount }}</div><div class="kpi-lbl">Total</div></div>
+    <div class="kpi-card kpi-success"><div class="kpi-val">{{ completedCount }}</div><div class="kpi-lbl">Completed</div></div>
+    <div class="kpi-card kpi-warning"><div class="kpi-val">{{ pendingCount }}</div><div class="kpi-lbl">In Progress</div></div>
+    <div class="kpi-card kpi-error"><div class="kpi-val">{{ overdueCount }}</div><div class="kpi-lbl">Overdue</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="search-field">
+      <mat-icon>search</mat-icon>
+      <input placeholder="Search candidate, type, billing code…" [(ngModel)]="filterText" (ngModelChange)="applyFilter()" />
+      <button *ngIf="filterText" (click)="clearFilters()"><mat-icon>close</mat-icon></button>
+    </div>
+    <select class="filter-sel" [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()">
+      <option value="">All Statuses</option>
+      <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+    </select>
+    <select class="filter-sel" [(ngModel)]="typeFilter" (ngModelChange)="applyFilter()">
+      <option value="">All Types</option>
+      <option *ngFor="let t of recordTypes" [value]="t">{{ t }}</option>
+    </select>
+    <select class="filter-sel" [(ngModel)]="priorityFilter" (ngModelChange)="applyFilter()">
+      <option value="">All Priorities</option>
+      <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+    </select>
+  </div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    <mat-progress-bar *ngIf="isLoading" mode="indeterminate" class="tbl-bar"></mat-progress-bar>
+
+    <div class="empty-state" *ngIf="!isLoading && dataSource.data.length === 0">
+      <mat-icon>assignment_late</mat-icon>
+      <h3>No records found</h3>
+      <p>Create a new verification request to get started.</p>
+      <button class="btn-primary" (click)="newRequest()">New Request</button>
+    </div>
+
+    <div class="tbl-wrap" *ngIf="dataSource.data.length > 0">
+      <table mat-table [dataSource]="dataSource" matSort class="rec-table">
+        <!-- Candidate -->
+        <ng-container matColumnDef="candidateName">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Candidate</th>
+          <td mat-cell *matCellDef="let r">
+            <div class="cand-cell">
+              <div class="cand-av" [class.flagged]="r.score !== null && r.score < 50">{{ r.candidateName[0] }}</div>
+              <div>
+                <div class="cand-name">{{ r.candidateName }}</div>
+                <div class="cand-id">{{ r.billingCode }}</div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+        <!-- Type -->
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+          <td mat-cell *matCellDef="let r"><span class="type-tag">{{ r.type }}</span></td>
+        </ng-container>
+        <!-- Status -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let r"><span class="status-chip" [ngClass]="statusClass(r.status)">{{ r.status }}</span></td>
+        </ng-container>
+        <!-- Priority -->
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Priority</th>
+          <td mat-cell *matCellDef="let r"><span class="pri-tag" [ngClass]="priorityClass(r.priority)">{{ r.priority }}</span></td>
+        </ng-container>
+        <!-- Score -->
+        <ng-container matColumnDef="score">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Score</th>
+          <td mat-cell *matCellDef="let r">
+            <div class="score-wrap" *ngIf="r.score !== null">
+              <span class="score-num" [style.color]="scoreColor(r.score)">{{ r.score }}</span>
+              <div class="score-bar"><div class="score-fill" [style.width.%]="r.score" [style.background]="scoreColor(r.score)"></div></div>
+            </div>
+            <span *ngIf="r.score === null" class="score-na">—</span>
+          </td>
+        </ng-container>
+        <!-- Due Date -->
+        <ng-container matColumnDef="dueDate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Due Date</th>
+          <td mat-cell *matCellDef="let r">
+            <span class="date-tag" [class.overdue]="isOverdue(r)">
+              <mat-icon *ngIf="isOverdue(r)" class="od-icon">warning</mat-icon>
+              {{ formatDate(r.dueDate) }}
+            </span>
+          </td>
+        </ng-container>
+        <!-- Billing -->
+        <ng-container matColumnDef="billingCode">
+          <th mat-header-cell *matHeaderCellDef>Billing</th>
+          <td mat-cell *matCellDef="let r"><code class="bill">{{ r.billingCode }}</code></td>
+        </ng-container>
+        <!-- Actions -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let r">
+            <button class="view-btn" (click)="openDetail(r)" matTooltip="View details">
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let r; columns: columns" class="rec-row" (click)="openDetail(r)"></tr>
+      </table>
+    </div>
+
+    <mat-paginator *ngIf="dataSource.data.length > 0" [pageSizeOptions]="[10,25,50]" pageSize="10" showFirstLastButtons></mat-paginator>
+  </div>
+</div>

@@ -1,0 +1,168 @@
+<div class="page-shell">
+  <div class="ph-row">
+    <div>
+      <div class="breadcrumb"><span routerLink="/dashboard">Home</span><span>›</span><span routerLink="/records">Records</span><span>›</span><span class="bc-cur">New Request</span></div>
+      <h1 class="page-title"><mat-icon>add_circle</mat-icon>New Verification Request</h1>
+      <p class="page-sub">Create a background verification request for a candidate</p>
+    </div>
+    <button class="btn-ghost" (click)="cancel()"><mat-icon>arrow_back</mat-icon>Back to Records</button>
+  </div>
+
+  <div class="stepper-layout">
+    <!-- Left: Steps -->
+    <div class="steps-card">
+      <mat-stepper orientation="vertical" #stepper linear>
+
+        <!-- Step 1: Select Candidate -->
+        <mat-step [stepControl]="step1" label="Select Candidate">
+          <div class="step-content" [formGroup]="step1">
+            <p class="step-hint">Choose an existing candidate for the verification</p>
+
+            <div class="loading-row" *ngIf="isLoadingCandidates">
+              <div class="mini-spinner"></div> Loading candidates…
+            </div>
+
+            <div class="candidate-list" *ngIf="!isLoadingCandidates">
+              <label
+                *ngFor="let c of candidates"
+                class="candidate-option"
+                [class.selected]="step1.value.candidateId === c.id"
+                [class.flagged]="c.status === 'Flagged'"
+              >
+                <input type="radio" formControlName="candidateId" [value]="c.id" hidden />
+                <div class="co-av" [class.flagged-av]="c.status === 'Flagged'">{{ c.firstName[0] }}{{ c.lastName[0] }}</div>
+                <div class="co-info">
+                  <div class="co-name">{{ c.firstName }} {{ c.lastName }}</div>
+                  <div class="co-email">{{ c.email }}</div>
+                  <div class="co-tags">
+                    <span class="risk-tag" [style.color]="riskColor(c.riskLevel)">{{ c.riskLevel }} Risk</span>
+                    <span class="flag-tag" *ngIf="c.status === 'Flagged'">⚑ Flagged</span>
+                  </div>
+                </div>
+                <mat-icon class="co-check" *ngIf="step1.value.candidateId === c.id">check_circle</mat-icon>
+              </label>
+
+              <div class="no-candidates" *ngIf="candidates.length === 0">
+                <p>No candidates found. <a routerLink="/candidates">Add a candidate first.</a></p>
+              </div>
+            </div>
+
+            <div class="step-actions">
+              <button matStepperNext class="btn-primary" [disabled]="step1.invalid">Next →</button>
+            </div>
+          </div>
+        </mat-step>
+
+        <!-- Step 2: Verification Details -->
+        <mat-step [stepControl]="step2" label="Verification Details">
+          <div class="step-content" [formGroup]="step2">
+            <p class="step-hint">Configure the type and priority of the verification</p>
+
+            <div class="form-field">
+              <label class="fl">Verification Type *</label>
+              <select class="field-sel" formControlName="type">
+                <option *ngFor="let t of recordTypes" [value]="t">{{ t }}</option>
+              </select>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-field">
+                <label class="fl">Priority *</label>
+                <div class="priority-opts">
+                  <label *ngFor="let p of priorities" class="p-opt" [class.selected]="step2.value.priority === p" [class]="'p-opt p-' + p.toLowerCase()">
+                    <input type="radio" formControlName="priority" [value]="p" hidden />{{ p }}
+                  </label>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="fl">Due Date *</label>
+                <input class="field-inp" type="date" formControlName="dueDate" [min]="today" />
+              </div>
+            </div>
+
+            <div class="cost-preview">
+              <span class="cp-label">Estimated Cost</span>
+              <span class="cp-val">₹{{ estimatedCost.toLocaleString('en-IN') }}</span>
+            </div>
+
+            <div class="step-actions">
+              <button matStepperPrevious class="btn-ghost">← Back</button>
+              <button matStepperNext class="btn-primary" [disabled]="step2.invalid">Next →</button>
+            </div>
+          </div>
+        </mat-step>
+
+        <!-- Step 3: Additional Notes -->
+        <mat-step label="Review & Submit">
+          <div class="step-content" [formGroup]="step3">
+            <p class="step-hint">Add any additional context for the verifier</p>
+
+            <div class="form-field">
+              <label class="fl">Notes for Verifier</label>
+              <textarea class="field-textarea" formControlName="notes" rows="4" placeholder="Any special instructions, contact details, or context…"></textarea>
+            </div>
+
+            <div class="step-actions">
+              <button matStepperPrevious class="btn-ghost">← Back</button>
+              <button class="btn-submit" (click)="submit()" [disabled]="isSubmitting || step1.invalid || step2.invalid">
+                <span *ngIf="!isSubmitting"><mat-icon>send</mat-icon>Submit Request</span>
+                <span *ngIf="isSubmitting">Submitting…</span>
+              </button>
+            </div>
+          </div>
+        </mat-step>
+      </mat-stepper>
+    </div>
+
+    <!-- Right: Summary -->
+    <div class="summary-card">
+      <div class="sc-title">Request Summary</div>
+
+      <div class="sc-section" *ngIf="selectedCandidate">
+        <div class="sc-label">Candidate</div>
+        <div class="sc-cand">
+          <div class="sc-av">{{ selectedCandidate.firstName[0] }}{{ selectedCandidate.lastName[0] }}</div>
+          <div>
+            <div class="sc-name">{{ selectedCandidate.firstName }} {{ selectedCandidate.lastName }}</div>
+            <div class="sc-email">{{ selectedCandidate.email }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-section" *ngIf="!selectedCandidate">
+        <div class="sc-placeholder">No candidate selected yet</div>
+      </div>
+
+      <div class="sc-sep"></div>
+
+      <div class="sc-row"><span class="sc-rl">Type</span><span class="sc-rv">{{ step2.value.type || '—' }}</span></div>
+      <div class="sc-row"><span class="sc-rl">Priority</span><span class="sc-rv" [class]="'p-' + (step2.value.priority||'').toLowerCase()">{{ step2.value.priority || '—' }}</span></div>
+      <div class="sc-row"><span class="sc-rl">Due Date</span><span class="sc-rv">{{ step2.value.dueDate || '—' }}</span></div>
+
+      <div class="sc-sep"></div>
+
+      <div class="cost-box">
+        <div class="cb-label">Estimated Cost</div>
+        <div class="cb-val">₹{{ estimatedCost.toLocaleString('en-IN') }}</div>
+        <div class="cb-hint">Final cost may vary based on complexity</div>
+      </div>
+
+      <!-- Check types info -->
+      <div class="check-info">
+        <div class="ci-title">About This Check</div>
+        <ng-container [ngSwitch]="step2.value.type">
+          <p *ngSwitchCase="'Employment Verification'">Confirms job title, tenure, and departure reason with previous employers.</p>
+          <p *ngSwitchCase="'Education Verification'">Authenticates degree certificates and academic records with institutions.</p>
+          <p *ngSwitchCase="'Criminal Check'">Searches national and state criminal databases for any records.</p>
+          <p *ngSwitchCase="'Credit Check'">Pulls CIBIL/credit bureau report to assess financial reliability.</p>
+          <p *ngSwitchCase="'Reference Check'">Contacts professional references provided by the candidate.</p>
+          <p *ngSwitchCase="'Address Verification'">Physically verifies current and past residential addresses.</p>
+          <p *ngSwitchCase="'Drug Test'">Screens for controlled substances via certified lab testing.</p>
+          <p *ngSwitchCase="'Social Media Check'">Reviews public social media profiles for reputational risks.</p>
+          <p *ngSwitchCase="'Professional License Check'">Verifies professional certifications and license validity.</p>
+          <p *ngSwitchDefault>Select a verification type to see details.</p>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

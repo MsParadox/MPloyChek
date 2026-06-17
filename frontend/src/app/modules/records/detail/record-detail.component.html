@@ -1,0 +1,142 @@
+<div class="page-shell" *ngIf="!isLoading && record">
+  <!-- Header -->
+  <div class="ph-row">
+    <div>
+      <div class="breadcrumb"><span routerLink="/dashboard">Home</span><span>›</span><span routerLink="/records" style="cursor:pointer">Records</span><span>›</span><span class="bc-cur">{{ record.type }}</span></div>
+      <h1 class="page-title"><mat-icon>assignment</mat-icon>{{ record.type }}</h1>
+      <div class="header-meta">
+        <span class="status-chip" [ngClass]="statusClass(record.status)">{{ record.status }}</span>
+        <span class="pri-tag" [ngClass]="priorityClass(record.priority)">{{ record.priority }}</span>
+        <code class="bill">{{ record.billingCode }}</code>
+        <span class="overdue-badge" *ngIf="isOverdue()"><mat-icon>warning</mat-icon>Overdue</span>
+      </div>
+    </div>
+    <div class="header-actions" *ngIf="canUpdateStatus">
+      <div class="status-dropdown" *ngIf="!isTerminal; else terminalBadge">
+        <label class="sd-label">Update Status</label>
+        <select class="filter-sel" (change)="updateStatus($any($event.target).value)" [disabled]="isSaving">
+          <option value="">— change status —</option>
+          <option *ngFor="let s of availableStatuses" [value]="s">→ {{ s }}</option>
+        </select>
+      </div>
+      <ng-template #terminalBadge>
+        <div class="terminal-badge"><mat-icon>lock</mat-icon>Record Finalised — No Further Updates</div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="detail-grid">
+
+    <!-- Left column -->
+    <div class="detail-left">
+      <!-- Candidate Info -->
+      <div class="info-card">
+        <div class="card-head"><mat-icon>person</mat-icon>Candidate Information</div>
+        <div class="info-rows">
+          <div class="ir"><span class="irl">Name</span><span class="irv">{{ record.candidateName }}</span></div>
+          <div class="ir"><span class="irl">Email</span><span class="irv">{{ record.candidateEmail }}</span></div>
+          <div class="ir"><span class="irl">Requested By</span><span class="irv">{{ record.requestedByName }}</span></div>
+          <div class="ir"><span class="irl">Assigned Verifier</span><span class="irv">{{ record.verifierName || 'Not assigned' }}</span></div>
+        </div>
+      </div>
+
+      <!-- Verification Details -->
+      <div class="info-card">
+        <div class="card-head"><mat-icon>fact_check</mat-icon>Verification Details</div>
+        <div class="info-rows">
+          <div class="ir" *ngIf="record.details.institution"><span class="irl">Institution</span><span class="irv">{{ record.details.institution }}</span></div>
+          <div class="ir" *ngIf="record.details.position"><span class="irl">Position / Degree</span><span class="irv">{{ record.details.position }}</span></div>
+          <div class="ir" *ngIf="record.details.duration"><span class="irl">Duration</span><span class="irv">{{ record.details.duration }}</span></div>
+          <div class="ir" *ngIf="record.details.verificationMethod"><span class="irl">Method</span><span class="irv">{{ record.details.verificationMethod }}</span></div>
+          <div class="ir" *ngIf="record.details.result"><span class="irl">Result</span><span class="irv result-val">{{ record.details.result }}</span></div>
+          <div class="ir" *ngIf="record.details.findings"><span class="irl">Findings</span><span class="irv warn-val">{{ record.details.findings }}</span></div>
+          <div class="ir" *ngIf="record.details.additionalNotes"><span class="irl">Notes</span><span class="irv">{{ record.details.additionalNotes }}</span></div>
+        </div>
+      </div>
+
+      <!-- Score Card -->
+      <div class="score-card" *ngIf="record.score !== null">
+        <div class="card-head"><mat-icon>grade</mat-icon>Compliance Score</div>
+        <div class="score-display">
+          <div class="score-circle" [style.--score]="record.score" [style.--color]="scoreColor(record.score)">
+            <div class="sc-inner">
+              <span class="sc-num" [style.color]="scoreColor(record.score)">{{ record.score }}</span>
+              <span class="sc-max">/100</span>
+            </div>
+          </div>
+          <div class="score-info">
+            <div class="si-label">Overall Score</div>
+            <div class="si-bar"><div class="si-fill" [style.width.%]="record.score" [style.background]="scoreColor(record.score)"></div></div>
+            <div class="si-desc">
+              <span *ngIf="record.score >= 80" class="verdict good">✓ Excellent — Strongly Recommended</span>
+              <span *ngIf="record.score >= 60 && record.score < 80" class="verdict warn">⚠ Acceptable — Review Advised</span>
+              <span *ngIf="record.score < 60" class="verdict bad">✗ Below Threshold — Flagged for Review</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="info-card">
+        <div class="card-head">
+          <mat-icon>comment</mat-icon>Remarks
+          <button *ngIf="!editMode" class="edit-btn" (click)="editMode=true"><mat-icon>edit</mat-icon></button>
+          <button *ngIf="editMode" class="save-btn" (click)="saveRemarks()" [disabled]="isSaving">Save</button>
+          <button *ngIf="editMode" class="cancel-edit-btn" (click)="editMode=false">Cancel</button>
+        </div>
+        <p class="remarks-text" *ngIf="!editMode">{{ record.remarks || 'No remarks added yet.' }}</p>
+        <textarea *ngIf="editMode" class="remarks-edit" [(ngModel)]="remarksDraft" rows="4" placeholder="Add remarks…"></textarea>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="detail-right">
+      <!-- Dates & Cost -->
+      <div class="info-card">
+        <div class="card-head"><mat-icon>schedule</mat-icon>Timeline & Cost</div>
+        <div class="info-rows">
+          <div class="ir"><span class="irl">Submitted</span><span class="irv">{{ formatDate(record.submittedDate) }}</span></div>
+          <div class="ir"><span class="irl">Due Date</span><span class="irv" [class.overdue-val]="isOverdue()">{{ formatDate(record.dueDate) }}</span></div>
+          <div class="ir"><span class="irl">Completed</span><span class="irv">{{ formatDate(record.completedDate) }}</span></div>
+          <mat-divider></mat-divider>
+          <div class="ir"><span class="irl">Est. Cost</span><span class="irv">₹{{ record.estimatedCost.toLocaleString('en-IN') }}</span></div>
+          <div class="ir"><span class="irl">Actual Cost</span><span class="irv teal">{{ costFormatted }}</span></div>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="info-card" *ngIf="record.tags.length > 0">
+        <div class="card-head"><mat-icon>label</mat-icon>Tags</div>
+        <div class="tags-wrap">
+          <span class="tag" *ngFor="let tag of record.tags">{{ tag }}</span>
+        </div>
+      </div>
+
+      <!-- Activity Timeline -->
+      <div class="info-card">
+        <div class="card-head"><mat-icon>timeline</mat-icon>Activity Timeline</div>
+        <div class="timeline">
+          <div class="tl-item" *ngFor="let ev of record.timeline; let last = last">
+            <div class="tl-dot" [ngClass]="statusClass(ev.status)"></div>
+            <div class="tl-line" *ngIf="!last"></div>
+            <div class="tl-content">
+              <div class="tl-event">{{ ev.event }}</div>
+              <div class="tl-desc">{{ ev.description }}</div>
+              <div class="tl-meta">{{ ev.performedBy }} · {{ formatDateTime(ev.date) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="page-shell loading-shell" *ngIf="isLoading">
+  <div class="skel-header"></div>
+  <div class="skel-grid">
+    <div class="skel-col"><div class="skel-card"></div><div class="skel-card sm"></div></div>
+    <div class="skel-col"><div class="skel-card sm"></div><div class="skel-card"></div></div>
+  </div>
+</div>

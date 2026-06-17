@@ -1,0 +1,171 @@
+<div class="page-shell" *ngIf="!isLoading && candidate">
+  <div class="ph-row">
+    <div>
+      <div class="breadcrumb"><span routerLink="/dashboard">Home</span><span>›</span><span routerLink="/candidates">Candidates</span><span>›</span><span class="bc-cur">{{ candidate.firstName }} {{ candidate.lastName }}</span></div>
+      <h1 class="page-title"><mat-icon>person</mat-icon>{{ candidate.firstName }} {{ candidate.lastName }}</h1>
+      <div class="header-tags">
+        <span class="status-tag" [class]="candidate.status === 'Active' ? 's-active' : candidate.status === 'Flagged' ? 's-flagged' : 's-archived'">{{ candidate.status }}</span>
+        <span class="risk-tag" [style.color]="riskColor(candidate.riskLevel)">{{ candidate.riskLevel }} Risk ({{ candidate.riskScore }}/100)</span>
+        <span class="consent-tag" [class.given]="candidate.consentGiven" [class.pending]="!candidate.consentGiven"><mat-icon>{{ candidate.consentGiven ? 'verified_user' : 'pending' }}</mat-icon>Consent {{ candidate.consentGiven ? 'Given' : 'Pending' }}</span>
+      </div>
+    </div>
+    <button class="btn-primary" (click)="newRequest()"><mat-icon>add</mat-icon>New Verification</button>
+  </div>
+
+  <div class="detail-grid">
+    <!-- Left: Profile -->
+    <div class="detail-left">
+      <!-- Hero card -->
+      <div class="hero-card">
+        <div class="hero-av" [class.flagged-av]="candidate.status === 'Flagged'">{{ candidate.firstName[0] }}{{ candidate.lastName[0] }}</div>
+        <div class="hero-info">
+          <h2>{{ candidate.firstName }} {{ candidate.lastName }}</h2>
+          <p>{{ candidate.email }}</p>
+          <p>{{ candidate.phone }}</p>
+        </div>
+        <div class="hero-stats">
+          <div class="hs"><div class="hs-val">{{ records.length }}</div><div class="hs-lbl">Checks</div></div>
+          <div class="hs-sep"></div>
+          <div class="hs"><div class="hs-val">{{ completedRecords }}</div><div class="hs-lbl">Done</div></div>
+          <div class="hs-sep"></div>
+          <div class="hs"><div class="hs-val" [style.color]="avgScore !== null ? riskColor(candidate.riskLevel) : ''">{{ avgScore ?? '—' }}</div><div class="hs-lbl">Avg Score</div></div>
+        </div>
+      </div>
+
+      <!-- Risk meter -->
+      <div class="risk-card">
+        <div class="card-head"><mat-icon>security</mat-icon>Risk Assessment</div>
+        <div class="risk-meter">
+          <div class="rm-bar"><div class="rm-fill" [style.width.%]="candidate.riskScore" [style.background]="riskColor(candidate.riskLevel)"></div></div>
+          <div class="rm-labels">
+            <span>0</span><span>25</span><span>50</span><span>75</span><span>100</span>
+          </div>
+        </div>
+        <div class="rm-score" [style.color]="riskColor(candidate.riskLevel)">
+          Risk Score: <strong>{{ candidate.riskScore }}/100</strong> — {{ candidate.riskLevel }} Risk
+        </div>
+      </div>
+
+      <!-- Personal Info -->
+      <div class="info-card">
+        <div class="card-head"><mat-icon>badge</mat-icon>Personal Information</div>
+        <div class="info-rows">
+          <div class="ir"><span class="irl">Age</span><span class="irv">{{ age(candidate.dateOfBirth) }} years</span></div>
+          <div class="ir"><span class="irl">Date of Birth</span><span class="irv">{{ formatDate(candidate.dateOfBirth) }}</span></div>
+          <div class="ir"><span class="irl">Nationality</span><span class="irv">{{ candidate.nationality }}</span></div>
+          <div class="ir"><span class="irl">Current Address</span><span class="irv">{{ candidate.currentAddress }}</span></div>
+          <div class="ir" *ngFor="let addr of candidate.previousAddresses"><span class="irl">Previous</span><span class="irv dim">{{ addr }}</span></div>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="info-card" *ngIf="candidate.tags.length > 0">
+        <div class="card-head"><mat-icon>label</mat-icon>Tags</div>
+        <div class="tags-wrap"><span class="tag" *ngFor="let t of candidate.tags">{{ t }}</span></div>
+      </div>
+
+      <!-- Notes -->
+      <div class="info-card" *ngIf="candidate.notes">
+        <div class="card-head"><mat-icon>notes</mat-icon>Notes</div>
+        <p class="notes-text">{{ candidate.notes }}</p>
+      </div>
+    </div>
+
+    <!-- Right: Education, Employment, Records -->
+    <div class="detail-right">
+      <!-- Education -->
+      <div class="info-card">
+        <div class="card-head"><mat-icon>school</mat-icon>Education History</div>
+        <div class="history-list" *ngIf="candidate.education.length > 0">
+          <div class="hist-item" *ngFor="let e of candidate.education">
+            <div class="hi-icon" [class.verified]="e.verified"><mat-icon>{{ e.verified ? 'check_circle' : 'pending' }}</mat-icon></div>
+            <div class="hi-content">
+              <div class="hi-title">{{ e.institution }}</div>
+              <div class="hi-sub">{{ e.degree }} in {{ e.field }}</div>
+              <div class="hi-meta">{{ e.startYear }} – {{ e.endYear || 'Present' }}</div>
+              <span class="ver-badge" [class.verified]="e.verified">{{ e.verified ? 'Verified' : 'Unverified' }}</span>
+            </div>
+          </div>
+        </div>
+        <p class="empty-msg" *ngIf="candidate.education.length === 0">No education records.</p>
+      </div>
+
+      <!-- Employment -->
+      <div class="info-card">
+        <div class="card-head"><mat-icon>work</mat-icon>Employment History</div>
+        <div class="history-list" *ngIf="candidate.employmentHistory.length > 0">
+          <div class="hist-item" *ngFor="let e of candidate.employmentHistory">
+            <div class="hi-icon" [class.verified]="e.verified"><mat-icon>{{ e.verified ? 'check_circle' : 'pending' }}</mat-icon></div>
+            <div class="hi-content">
+              <div class="hi-title">{{ e.company }}</div>
+              <div class="hi-sub">{{ e.position }}</div>
+              <div class="hi-meta">{{ e.startDate | date:'MMM yyyy' }} – {{ e.current ? 'Present' : (e.endDate | date:'MMM yyyy') }}</div>
+              <div class="hi-contact" *ngIf="e.contactName">Contact: {{ e.contactName }} · {{ e.contactPhone }}</div>
+              <span class="ver-badge" [class.verified]="e.verified">{{ e.verified ? 'Verified' : 'Unverified' }}</span>
+            </div>
+          </div>
+        </div>
+        <p class="empty-msg" *ngIf="candidate.employmentHistory.length === 0">No employment records.</p>
+      </div>
+
+      <!-- Verification Records -->
+      <div class="info-card">
+        <div class="card-head"><mat-icon>assignment</mat-icon>Verification Checks ({{ records.length }})</div>
+        <div class="records-list" *ngIf="records.length > 0">
+          <div class="rec-item" *ngFor="let r of records" (click)="router.navigate(['/records', r.id])">
+            <div class="ri-type">{{ r.type }}</div>
+            <span class="status-chip" [ngClass]="statusClass(r.status)">{{ r.status }}</span>
+            <span class="ri-score" *ngIf="r.score !== null">{{ r.score }}/100</span>
+            <mat-icon class="ri-arrow">chevron_right</mat-icon>
+          </div>
+        </div>
+        <p class="empty-msg" *ngIf="records.length === 0">No verification checks for this candidate.</p>
+        <button class="btn-outline" (click)="newRequest()"><mat-icon>add</mat-icon>Request New Check</button>
+      </div>
+
+      <!-- Documents -->
+      <div class="info-card">
+        <div class="card-head"><mat-icon>folder</mat-icon>Documents ({{ documents.length }})</div>
+
+        <!-- Upload row -->
+        <div class="doc-upload">
+          <select class="doc-type-sel" [(ngModel)]="selectedType" [disabled]="uploading" aria-label="Document type">
+            <option *ngFor="let t of docTypes" [value]="t">{{ t }}</option>
+          </select>
+          <button type="button" class="btn-outline doc-upload-btn" (click)="fileInput.click()" [disabled]="uploading">
+            <mat-icon>upload_file</mat-icon>{{ uploading ? 'Uploading…' : 'Upload Document' }}
+          </button>
+          <input #fileInput type="file" hidden [accept]="acceptTypes" (change)="onFileSelected($event)" />
+        </div>
+        <div class="doc-hint">PDF, JPG, PNG, WEBP, DOC, DOCX · max 10 MB</div>
+
+        <!-- Upload progress -->
+        <div class="doc-progress" *ngIf="uploading">
+          <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+          <span class="doc-progress-pct">{{ uploadProgress }}%</span>
+        </div>
+
+        <!-- Document list -->
+        <div class="docs-list" *ngIf="documents.length > 0">
+          <div class="doc-item" *ngFor="let d of documents">
+            <mat-icon class="doc-icon">{{ docIcon(d) }}</mat-icon>
+            <div class="doc-info">
+              <a class="doc-name" [href]="docUrl(d)" target="_blank" rel="noopener" [matTooltip]="d.name">{{ d.name }}</a>
+              <div class="doc-meta"><span class="doc-tag">{{ d.type }}</span>{{ docSize(d) }} · {{ formatDate(d.uploadedAt) }}</div>
+            </div>
+            <a class="doc-act" [href]="docUrl(d)" target="_blank" rel="noopener" matTooltip="View / download"><mat-icon>open_in_new</mat-icon></a>
+            <button type="button" class="doc-act doc-del" *ngIf="canDelete(d)" (click)="deleteDocument(d)" matTooltip="Delete"><mat-icon>delete_outline</mat-icon></button>
+          </div>
+        </div>
+
+        <p class="empty-msg" *ngIf="documents.length === 0 && !docsLoading">No documents uploaded yet.</p>
+        <p class="empty-msg" *ngIf="docsLoading">Loading documents…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-shell loading-shell" *ngIf="isLoading">
+  <div class="skel-header"></div>
+  <div class="skel-grid"><div class="skel-col"><div class="skel-card"></div><div class="skel-card sm"></div></div><div class="skel-col"><div class="skel-card"></div><div class="skel-card"></div></div></div>
+</div>

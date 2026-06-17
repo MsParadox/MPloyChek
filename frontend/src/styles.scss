@@ -1,0 +1,376 @@
+// ============================================================
+// MPloyChek — Global Design System
+// Dark industrial theme: deep navy, teal accents, amber highlights
+// ============================================================
+
+// Google Fonts
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fira+Code:wght@400;500&display=swap');
+
+// ── CSS Custom Properties (Design Tokens) ──────────────────
+:root {
+  // Colors
+  --bg-primary:     #070b14;
+  --bg-secondary:   #0c1220;
+  --surface-0:      #0a0f1e;
+  --surface-1:      #0f1729;
+  --surface-2:      #141d36;
+  --surface-3:      #1a2540;
+
+  --accent-teal:    #2dd4bf;
+  --accent-amber:   #f59e0b;
+  --accent-blue:    #3b82f6;
+
+  --border-subtle:  rgba(255, 255, 255, 0.07);
+  --border-medium:  rgba(255, 255, 255, 0.12);
+
+  --status-success: #22c55e;
+  --status-warning: #f59e0b;
+  --status-error:   #ef4444;
+  --status-info:    #3b82f6;
+
+  --text-primary:   rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --text-muted:     rgba(255, 255, 255, 0.28);
+
+  // ── Theme-aware tiers (used app-wide so light mode works) ──
+  // Dark defaults below ≈ the original hard-coded whites, so the dark
+  // theme is visually unchanged. body.light-mode (further down) overrides them.
+  --t-1: #ffffff;                      // headings / strongest text
+  --t-2: rgba(255, 255, 255, 0.80);    // primary body text
+  --t-3: rgba(255, 255, 255, 0.55);    // secondary text
+  --t-4: rgba(255, 255, 255, 0.35);    // muted / labels
+  --t-5: rgba(255, 255, 255, 0.20);    // faint / placeholders
+  --line-2: rgba(255, 255, 255, 0.12); // stronger borders
+  --line-1: rgba(255, 255, 255, 0.07); // subtle borders
+  --fill-2: rgba(255, 255, 255, 0.08); // hover / chip fills
+  --fill-1: rgba(255, 255, 255, 0.04); // subtle surface fills
+  --navbar-bg: rgba(7, 11, 20, 0.96);  // sticky navbar / mobile menu
+
+  // Spacing
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+
+  // Shadows
+  --shadow-sm:  0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md:  0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg:  0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+// ── Light theme overrides ──────────────────────────────────
+// Only the tokens change; every component reads these tokens, so the
+// whole app re-themes without per-component edits.
+body.light-mode {
+  --bg-primary:     #eef2f7;
+  --bg-secondary:   #e2e8f0;
+  --surface-0:      #ffffff;
+  --surface-1:      #ffffff;
+  --surface-2:      #f4f7fb;
+  --surface-3:      #e9eef5;
+
+  --border-subtle:  rgba(15, 23, 42, 0.10);
+  --border-medium:  rgba(15, 23, 42, 0.16);
+
+  --text-primary:   rgba(15, 23, 42, 0.92);
+  --text-secondary: rgba(15, 23, 42, 0.60);
+  --text-muted:     rgba(15, 23, 42, 0.45);
+
+  --t-1: #0f172a;
+  --t-2: rgba(15, 23, 42, 0.82);
+  --t-3: rgba(15, 23, 42, 0.62);
+  --t-4: rgba(15, 23, 42, 0.48);
+  --t-5: rgba(15, 23, 42, 0.34);
+  --line-2: rgba(15, 23, 42, 0.16);
+  --line-1: rgba(15, 23, 42, 0.10);
+  --fill-2: rgba(15, 23, 42, 0.07);
+  --fill-1: rgba(15, 23, 42, 0.04);
+  --navbar-bg: rgba(255, 255, 255, 0.96);
+
+  --shadow-sm:  0 2px 8px rgba(15, 23, 42, 0.08);
+  --shadow-md:  0 8px 24px rgba(15, 23, 42, 0.12);
+  --shadow-lg:  0 20px 60px rgba(15, 23, 42, 0.18);
+}
+
+// ── Reset ──────────────────────────────────────────────────
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+// ── Scrollbar ──────────────────────────────────────────────
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb {
+  background: rgba(45, 212, 191, 0.25);
+  border-radius: 4px;
+  &:hover { background: rgba(45, 212, 191, 0.45); }
+}
+
+// ── Typography ─────────────────────────────────────────────
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text-primary);
+}
+code, pre {
+  font-family: 'Fira Code', 'Courier New', monospace;
+}
+a {
+  color: var(--accent-teal);
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+// ── Angular Material Overrides ─────────────────────────────
+// Snackbar
+.mat-mdc-snack-bar-container {
+  --mdc-snackbar-container-color: var(--surface-2) !important;
+  --mdc-snackbar-supporting-text-color: var(--t-1) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 12px !important;
+}
+.error-snack .mat-mdc-snack-bar-container {
+  --mdc-snackbar-container-color: rgba(239, 68, 68, 0.12) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+// Dialog
+.mat-mdc-dialog-container {
+  --mdc-dialog-container-color: var(--bg-primary) !important;
+  border-radius: 20px !important;
+  overflow: hidden;
+}
+.dark-dialog .mat-mdc-dialog-container {
+  --mdc-dialog-container-color: var(--bg-primary) !important;
+}
+.dark-dialog .mdc-dialog__surface {
+  background: var(--bg-primary) !important;
+  border-radius: 20px !important;
+  border: 1px solid var(--line-1) !important;
+  overflow: hidden;
+}
+
+// Mat table (global base)
+.mat-mdc-table { background: transparent !important; }
+.mat-sort-header-button { color: inherit !important; font-size: inherit !important; }
+
+// Mat form fields  — used in auth dialog
+.mat-mdc-form-field { width: 100%; }
+.mat-mdc-text-field-wrapper {
+  background: var(--fill-1) !important;
+  border-radius: 10px !important;
+}
+.mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing {
+  border-color: var(--line-1) !important;
+}
+.mdc-text-field--outlined:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):hover
+  .mdc-notched-outline .mdc-notched-outline__leading,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):hover
+  .mdc-notched-outline .mdc-notched-outline__notch,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):hover
+  .mdc-notched-outline .mdc-notched-outline__trailing {
+  border-color: rgba(45, 212, 191, 0.3) !important;
+}
+.mat-mdc-input-element { color: var(--t-1) !important; }
+.mat-mdc-form-field-label { color: var(--t-4) !important; }
+.mat-mdc-select-value { color: var(--t-1) !important; }
+.mat-mdc-option { background: var(--surface-2) !important; color: var(--t-2) !important; }
+.mat-mdc-option.mdc-list-item--selected { background: rgba(45,212,191,0.1) !important; color: var(--accent-teal) !important; }
+
+// Paginator
+.mat-mdc-paginator {
+  background: transparent !important;
+  color: var(--t-4) !important;
+}
+.mat-mdc-paginator-icon { fill: var(--t-4) !important; }
+.mat-mdc-select-arrow { color: var(--t-4) !important; }
+.mat-mdc-paginator-range-label { color: var(--t-4) !important; }
+.mat-mdc-icon-button[disabled] .mat-mdc-paginator-icon { fill: var(--t-5) !important; }
+
+// Mat menu
+.mat-mdc-menu-panel {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--shadow-lg) !important;
+  min-width: 220px !important;
+}
+.mat-mdc-menu-item { color: var(--t-2) !important; }
+.mat-mdc-menu-item:hover { background: var(--line-1) !important; }
+.mat-mdc-menu-item .mat-icon { color: var(--t-4) !important; }
+
+// Mat tabs
+.mat-mdc-tab-header { border-bottom: 1px solid var(--line-1) !important; }
+.mat-mdc-tab .mdc-tab__text-label { color: var(--t-4) !important; }
+.mat-mdc-tab.mdc-tab--active .mdc-tab__text-label { color: var(--accent-teal) !important; }
+.mdc-tab-indicator__content--underline { border-color: var(--accent-teal) !important; }
+
+// Progress bar
+.mat-mdc-progress-bar .mdc-linear-progress__bar-inner { border-color: var(--accent-teal) !important; }
+
+// Mat divider
+.mat-divider { border-top-color: var(--line-1) !important; }
+
+// ── Utility Classes ────────────────────────────────────────
+.text-teal   { color: var(--accent-teal); }
+.text-amber  { color: var(--accent-amber); }
+.text-muted  { color: var(--text-muted); }
+.text-success{ color: var(--status-success); }
+.text-error  { color: var(--status-error); }
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+// ── Pipe helpers ───────────────────────────────────────────
+// (min pipe for progress bar)
+
+// ============================================================
+// ── Responsive Design System ─────────────────────────────────
+// Breakpoints:
+//   Mobile:  ≤ 600px   (phones)
+//   Tablet:  601-1024px (iPads, small laptops)
+//   Desktop: > 1024px   (default)
+// ============================================================
+
+// ── Page shells (every route wraps content in .page-shell) ──
+.page-shell {
+  padding: 28px;
+  @media (max-width: 1024px) { padding: 20px 16px; }
+  @media (max-width: 600px)  { padding: 14px 12px; }
+}
+
+// ── Two-column detail grids (candidate, record detail) ──────
+.detail-grid {
+  @media (max-width: 900px)  { grid-template-columns: 1fr !important; }
+}
+
+// ── KPI / stat rows ─────────────────────────────────────────
+.kpi-row, .kpi-row-6 {
+  @media (max-width: 600px)  { flex-direction: column !important; }
+}
+.kpi6 {
+  @media (max-width: 600px)  { flex: unset !important; width: 100%; }
+}
+
+// ── Chart rows in reports ────────────────────────────────────
+.charts-row, .bottom-row {
+  @media (max-width: 900px) { flex-direction: column !important; }
+}
+.chart-card, .activity-card {
+  @media (max-width: 900px) { width: 100% !important; min-width: unset !important; }
+}
+
+// ── Candidate / record list tables ──────────────────────────
+// On mobile, hide non-critical table columns
+::ng-deep .mat-mdc-table {
+  @media (max-width: 600px) {
+    .mat-column-ownerId,
+    .mat-column-billingCode,
+    .mat-column-submittedDate { display: none !important; }
+  }
+}
+
+// ── Dashboard page header row ────────────────────────────────
+.ph-row {
+  @media (max-width: 600px) {
+    flex-direction: column !important;
+    gap: 12px !important;
+    .btn-primary, button { width: 100%; justify-content: center; }
+  }
+}
+
+// ── Recent activity + candidate cards on dashboard ──────────
+.dash-grid {
+  @media (max-width: 900px) { grid-template-columns: 1fr !important; }
+}
+
+// ── New-request steps ────────────────────────────────────────
+.step-row {
+  @media (max-width: 600px) { flex-direction: column !important; gap: 8px !important; }
+}
+.form-grid-2 {
+  @media (max-width: 600px) { grid-template-columns: 1fr !important; }
+}
+
+// ── User-management table ────────────────────────────────────
+.users-table-wrap {
+  @media (max-width: 600px) { overflow-x: auto; }
+}
+
+// ── Candidate list cards ─────────────────────────────────────
+.cands-grid {
+  @media (max-width: 600px) { grid-template-columns: 1fr !important; }
+}
+
+// ── Profile tabs ─────────────────────────────────────────────
+.profile-tabs {
+  @media (max-width: 600px) { flex-direction: column !important; }
+}
+.tab-content-wrap {
+  @media (max-width: 600px) { padding: 16px 12px !important; }
+}
+
+// ── Auth / login page ────────────────────────────────────────
+.login-container {
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr !important;
+    margin: 12px !important;
+    .login-left { display: none !important; }
+    .login-right { padding: 32px 24px !important; }
+  }
+}
+
+// ── Export buttons in reports ────────────────────────────────
+.export-group {
+  @media (max-width: 600px) {
+    flex-direction: column !important;
+    width: 100%;
+    button { width: 100%; justify-content: center; }
+  }
+}
+
+// ── Notifications list ───────────────────────────────────────
+.notif-list {
+  @media (max-width: 600px) { padding: 0 !important; }
+}
+
+// ── Typography scale-down on small screens ───────────────────
+@media (max-width: 600px) {
+  .page-title  { font-size: 20px !important; }
+  h1           { font-size: 22px !important; }
+  h2           { font-size: 18px !important; }
+}
+
+// ── Tables: allow horizontal scroll on small screens ─────────
+.tbl-wrap, .table-wrap, .mat-mdc-table-container {
+  @media (max-width: 768px) { overflow-x: auto !important; }
+}
+
+// ── Touch target minimum size (WCAG) ────────────────────────
+@media (max-width: 768px) {
+  button, a, [role="button"], .nav-link, .demo-chip {
+    min-height: 44px;
+  }
+  .nav-link { padding: 0 10px !important; font-size: 12px !important; }
+}

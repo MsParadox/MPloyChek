@@ -1,0 +1,82 @@
+# ============================================================
+# MPloyChek — Docker Compose (Development)
+# Uses local DB for dev, Neon for production
+# Author: Mohit Sharma
+# Usage: docker-compose -f docker-compose.dev.yml up
+# ============================================================
+
+version: '3.9'
+
+services:
+  # ── Local PostgreSQL (dev only — Neon used in production) ──
+  postgres:
+    image: postgres:16-alpine
+    container_name: mploychek-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       mploychek_dev
+      POSTGRES_USER:     mploychek
+      POSTGRES_PASSWORD: mploychek_dev_2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev:/var/lib/postgresql/data
+    networks: [mploychek-dev]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "mploychek", "-d", "mploychek_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: builder
+    container_name: mploychek-api-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV:    development
+      PORT:        3000
+      # FIX: DATABASE_URL now properly set for local postgres
+      DATABASE_URL: postgresql://mploychek:mploychek_dev_2024@postgres:5432/mploychek_dev?sslmode=disable
+      DIRECT_URL:   postgresql://mploychek:mploychek_dev_2024@postgres:5432/mploychek_dev?sslmode=disable
+      JWT_SECRET:   dev_mploychek_jwt_secret_change_in_prod_min32chars
+      ALLOWED_ORIGINS: http://localhost:4200
+      UPLOAD_DIR:   /app/uploads
+    volumes:
+      - ./backend/src:/app/src:delegated
+      - ./backend/prisma:/app/prisma:delegated
+      - uploads_dev:/app/uploads
+    command: npm run dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [mploychek-dev]
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: mploychek-ui-dev
+    restart: unless-stopped
+    ports:
+      - "4200:4200"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend/src:/app/src:delegated
+    command: npx ng serve --host 0.0.0.0 --port 4200 --disable-host-check
+    depends_on: [backend]
+    networks: [mploychek-dev]
+
+volumes:
+  postgres_dev:
+    name: mploychek_postgres_dev
+  uploads_dev:
+    name: mploychek_uploads_dev
+
+networks:
+  mploychek-dev:
+    driver: bridge

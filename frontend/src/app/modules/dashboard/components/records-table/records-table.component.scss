@@ -1,0 +1,237 @@
+// Records Table Styles
+.records-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  overflow: hidden;
+  animation: fadeUp 0.5s 0.15s both;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+.records-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 20px;
+  flex-wrap: wrap;
+  gap: 14px;
+  border-bottom: 1px solid var(--line-1);
+}
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--t-1);
+  margin: 0 0 8px;
+}
+.quick-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.qs {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+.qs-success { background: rgba(34,197,94,0.1); color: var(--status-success); }
+.qs-info    { background: rgba(59,130,246,0.1); color: #60a5fa; }
+.qs-warning { background: rgba(245,158,11,0.1); color: var(--accent-amber); }
+.qs-error   { background: rgba(239,68,68,0.1);  color: var(--status-error); }
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--fill-1);
+  border: 1px solid var(--line-1);
+  border-radius: 10px;
+  padding: 8px 14px;
+  width: 240px;
+  transition: border-color 0.2s;
+  &:focus-within { border-color: rgba(45,212,191,0.3); }
+}
+.search-icon { font-size: 16px; color: var(--t-4); }
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--t-1);
+  font-size: 13px;
+  font-family: inherit;
+  &::placeholder { color: var(--t-5); }
+}
+.clear-btn {
+  background: none;
+  border: none;
+  color: var(--t-4);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  &:hover { color: var(--t-1); }
+}
+
+// Skeleton loading
+.table-loading { padding: 16px 24px; }
+.loading-rows { display: flex; flex-direction: column; gap: 12px; }
+.loading-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.skel {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--fill-1) 25%, var(--line-1) 50%, var(--fill-1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+// Empty state
+.empty-state {
+  padding: 64px;
+  text-align: center;
+  color: var(--t-4);
+}
+.empty-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.3; }
+
+// Table
+.table-wrapper { overflow-x: auto; }
+.records-table {
+  width: 100%;
+  background: transparent;
+
+  ::ng-deep {
+    .mat-mdc-header-row { background: var(--fill-1); }
+    .mat-mdc-header-cell {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--t-4);
+      border-bottom-color: var(--line-1);
+      padding: 0 16px;
+    }
+    .mat-mdc-cell {
+      color: var(--t-2);
+      font-size: 13px;
+      border-bottom-color: var(--fill-1);
+      padding: 0 16px;
+    }
+    .mat-mdc-row {
+      transition: background 0.15s;
+      &:hover { background: var(--fill-1); }
+      &.expanded { background: rgba(45,212,191,0.04); }
+    }
+    .detail-row { height: 0; }
+    .detail-row .mat-mdc-cell { border-bottom: 0; padding: 0; }
+    .mat-mdc-paginator {
+      background: transparent;
+      color: var(--t-4);
+      border-top: 1px solid var(--line-1);
+    }
+    .mat-sort-header-arrow { color: var(--t-4); }
+  }
+}
+
+.data-row { height: 56px; cursor: default; }
+
+// Cell styles
+.owner-tag {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--t-4);
+  background: var(--line-1);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.candidate-cell { display: flex; align-items: center; gap: 10px; }
+.candidate-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(45,212,191,0.1);
+  color: var(--accent-teal);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.candidate-name  { font-size: 13px; font-weight: 600; color: var(--t-1); }
+.candidate-email { font-size: 11px; color: var(--t-4); }
+
+.type-tag {
+  font-size: 12px;
+  color: var(--t-3);
+}
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.status-success { background: rgba(34,197,94,0.12); color: var(--status-success); }
+.status-info    { background: rgba(59,130,246,0.12); color: #60a5fa; }
+.status-warning { background: rgba(245,158,11,0.12); color: var(--accent-amber); }
+.status-error   { background: rgba(239,68,68,0.12);  color: var(--status-error); }
+
+.priority-dot {
+  font-size: 12px;
+  font-weight: 500;
+}
+.priority-high { color: var(--status-error); }
+.priority-med  { color: var(--accent-amber); }
+.priority-low  { color: var(--t-4); }
+
+.score-badge { font-size: 14px; font-weight: 700; }
+.score-null  { color: var(--t-5); }
+.date-cell   { font-size: 12px; color: var(--t-4); white-space: nowrap; }
+
+.expand-btn {
+  background: var(--line-1);
+  border: 1px solid var(--line-1);
+  border-radius: 6px;
+  color: var(--t-4);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 4px 8px;
+  transition: all 0.2s;
+
+  &:hover, &.active {
+    background: rgba(45,212,191,0.1);
+    border-color: rgba(45,212,191,0.2);
+    color: var(--accent-teal);
+  }
+}
+
+// Expanded detail panel
+.detail-panel {
+  padding: 16px 20px 20px 20px;
+  background: rgba(45,212,191,0.03);
+  border-top: 1px solid rgba(45,212,191,0.08);
+  overflow: hidden;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.detail-item { display: flex; flex-direction: column; gap: 4px; }
+.dl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--t-4); }
+.dv { font-size: 13px; color: var(--t-2); &.result { color: var(--accent-teal); } }
+
+.detail-remarks {
+  border-top: 1px solid var(--line-1);
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  p { font-size: 13px; color: var(--t-3); margin: 0; line-height: 1.6; }
+}

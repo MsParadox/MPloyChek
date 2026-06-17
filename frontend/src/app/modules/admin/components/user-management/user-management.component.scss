@@ -1,0 +1,223 @@
+// User Management Styles
+.um-container {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  overflow: hidden;
+  animation: fadeUp 0.4s 0.1s both;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+// Toolbar
+.um-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line-1);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.toolbar-left, .toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.summary-chips { display: flex; gap: 8px; }
+.chip {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.chip-total    { background: var(--line-1); color: var(--t-3); }
+.chip-active   { background: rgba(34,197,94,0.1); color: var(--status-success); }
+.chip-admin    { background: rgba(245,158,11,0.1); color: var(--accent-amber); }
+
+.delay-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--fill-1);
+  border-radius: 10px;
+  padding: 8px 14px;
+  border: 1px solid var(--line-1);
+}
+.delay-label {
+  font-size: 11px;
+  color: var(--t-4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.mini-slider { width: 80px; accent-color: var(--accent-teal); cursor: pointer; }
+.delay-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-amber);
+  min-width: 44px;
+}
+.refresh-btn {
+  background: none;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  color: var(--t-4);
+  cursor: pointer;
+  padding: 3px 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+  &:hover:not(:disabled) { color: var(--accent-teal); border-color: rgba(45,212,191,0.3); }
+  &:disabled { opacity: 0.4; }
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--fill-1);
+  border: 1px solid var(--line-1);
+  border-radius: 10px;
+  padding: 8px 14px;
+  width: 220px;
+  &:focus-within { border-color: rgba(45,212,191,0.3); }
+}
+.si { color: var(--t-4); font-size: 15px; }
+.search-inp {
+  flex: 1; background: transparent; border: none; outline: none;
+  color: var(--t-1); font-size: 13px; font-family: inherit;
+  &::placeholder { color: var(--t-5); }
+}
+.clr {
+  background: none; border: none; color: var(--t-4);
+  cursor: pointer; font-size: 11px; padding: 0;
+  &:hover { color: var(--t-1); }
+}
+
+.create-btn {
+  padding: 9px 20px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, var(--accent-teal), #0ea5e9);
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: all 0.2s;
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(45,212,191,0.3);
+  }
+}
+
+.loading-bar ::ng-deep .mdc-linear-progress__bar-inner {
+  border-color: var(--accent-teal);
+}
+
+// Table
+.table-wrapper { overflow-x: auto; }
+.um-table {
+  width: 100%;
+  background: transparent;
+
+  ::ng-deep {
+    .mat-mdc-header-cell {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+      text-transform: uppercase; color: var(--t-4);
+      border-bottom-color: var(--line-1);
+      padding: 0 16px;
+    }
+    .mat-mdc-cell {
+      color: var(--t-2); font-size: 13px;
+      border-bottom-color: var(--fill-1);
+      padding: 0 16px;
+    }
+    .mat-mdc-row {
+      height: 60px;
+      transition: background 0.15s;
+      &:hover { background: var(--fill-1); }
+    }
+    .mat-mdc-paginator {
+      background: transparent; color: var(--t-4);
+      border-top: 1px solid var(--line-1);
+    }
+  }
+}
+
+.uid {
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--accent-teal);
+  background: rgba(45,212,191,0.08);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.name-cell { display: flex; align-items: center; gap: 10px; }
+.u-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--line-1);
+  color: var(--t-3);
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  &.admin-av { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+}
+.u-name  { font-size: 13px; font-weight: 600; color: var(--t-1); }
+.u-email { font-size: 11px; color: var(--t-4); }
+
+.role-tag {
+  font-size: 12px;
+  color: var(--t-3);
+  &.admin-tag { color: var(--accent-amber); }
+}
+.dept      { font-size: 12px; color: var(--t-3); }
+.date-cell { font-size: 12px; color: var(--t-4); white-space: nowrap; &.never { opacity: 0.4; } }
+
+// Status button
+.status-btn {
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  font-size: 11px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  transition: all 0.2s;
+}
+.status-active    { background: rgba(34,197,94,0.1); color: var(--status-success); border-color: rgba(34,197,94,0.2); }
+.status-inactive  { background: rgba(245,158,11,0.1); color: var(--accent-amber); border-color: rgba(245,158,11,0.2); }
+.status-suspended { background: rgba(239,68,68,0.1);  color: var(--status-error);  border-color: rgba(239,68,68,0.2); }
+
+// Action buttons
+.actions-cell { display: flex; gap: 6px; }
+.action-btn {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--line-1);
+  background: var(--fill-1);
+  color: var(--t-4);
+  cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+
+  &.edit:hover {
+    background: rgba(45,212,191,0.12);
+    border-color: rgba(45,212,191,0.3);
+    color: var(--accent-teal);
+  }
+  &.delete:hover:not(:disabled) {
+    background: rgba(239,68,68,0.12);
+    border-color: rgba(239,68,68,0.3);
+    color: var(--status-error);
+  }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.empty-state {
+  padding: 60px;
+  text-align: center;
+  color: var(--t-4);
+}
+.es-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.3; }

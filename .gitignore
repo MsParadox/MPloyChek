@@ -1,0 +1,59 @@
+# ============================================================
+# MPloyChek — Git Ignore
+# ============================================================
+
+# ── Dependencies ────────────────────────────────────────────
+node_modules/
+**/node_modules/
+
+# ── Build outputs ───────────────────────────────────────────
+dist/
+**/dist/
+out-tsc/
+*.tsbuildinfo
+
+# ── Environment & secrets ───────────────────────────────────
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ── Generated / runtime data ────────────────────────────────
+backend/src/data/db.json
+uploads/
+**/uploads/
+*.db
+backend/prisma/dev.db*
+
+# ── Test coverage ───────────────────────────────────────────
+coverage/
+**/coverage/
+*.lcov
+.nyc_output/
+
+# ── Logs ────────────────────────────────────────────────────
+logs/
+**/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Angular cache ───────────────────────────────────────────
+.angular/
+
+# ── Editor / IDE ────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+

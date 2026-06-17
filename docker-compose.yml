@@ -1,0 +1,97 @@
+# ============================================================
+# MPloyChek — Docker Compose (Production)
+# Services: frontend, backend (connects to Neon PostgreSQL)
+# Author: Mohit Sharma
+#
+# Usage:
+#   cp .env.example .env && nano .env   # fill in Neon creds
+#   docker-compose up --build -d         # build + run
+#   docker-compose logs -f backend        # stream logs
+#   docker-compose down                   # stop
+# ============================================================
+
+version: '3.9'
+
+services:
+  # ── Backend (Node.js + Express + Prisma → Neon) ──────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: mploychek-api
+    image: mploychek-backend:4.0
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV:    production
+      PORT:        3000
+      # ↓ Set these in your .env file (never commit real values)
+      DATABASE_URL:  ${DATABASE_URL}
+      DIRECT_URL:    ${DIRECT_URL}
+      JWT_SECRET:    ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-28800}
+      RT_EXPIRES_DAYS: ${RT_EXPIRES_DAYS:-7}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost,http://localhost:80}
+      FRONTEND_URL:  ${FRONTEND_URL:-http://localhost}
+      # Email (Brevo — free)
+      BREVO_SMTP_LOGIN:    ${BREVO_SMTP_LOGIN:-}
+      BREVO_SMTP_PASSWORD: ${BREVO_SMTP_PASSWORD:-}
+      BREVO_SENDER_EMAIL:  ${BREVO_SENDER_EMAIL:-}
+      # Storage (Cloudinary — optional free tier)
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY:    ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+    volumes:
+      # Persist uploaded documents between restarts (when not using Cloudinary)
+      - uploads_data:/app/uploads
+    networks:
+      - mploychek-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options: { max-size: "10m", max-file: "3" }
+
+  # ── Frontend (Angular + Nginx) ───────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: mploychek-ui
+    image: mploychek-frontend:4.0
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - mploychek-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options: { max-size: "5m", max-file: "3" }
+
+# ── Volumes ──────────────────────────────────────────────
+volumes:
+  uploads_data:
+    driver: local
+    name: mploychek_uploads
+
+# ── Networks ─────────────────────────────────────────────
+networks:
+  mploychek-net:
+    driver: bridge
+    name: mploychek-network

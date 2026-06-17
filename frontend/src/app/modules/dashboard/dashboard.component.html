@@ -1,0 +1,97 @@
+<div class="dashboard-page">
+
+  <!-- Header -->
+  <div class="dash-header">
+    <div>
+      <h1 class="dash-greeting">{{ greeting }}, <span class="name-hi">{{ currentUser?.firstName }}</span> 👋</h1>
+      <p class="dash-sub">
+        <span class="role-pill" [class.admin]="auth.isAdmin" [class.manager]="currentUser?.role === 'Manager'" [class.verifier]="currentUser?.role === 'Verifier'">{{ currentUser?.role }}</span>
+        Here's your verification overview for today
+      </p>
+    </div>
+    <div class="dash-controls">
+      <div class="delay-ctl">
+        <label>API Delay</label>
+        <input type="range" [(ngModel)]="asyncDelayMs" min="0" max="3000" step="100" class="mini-slider" />
+        <span class="delay-val">{{ asyncDelayMs }}ms</span>
+      </div>
+      <button class="reload-btn" (click)="loadDashboard(asyncDelayMs)" [disabled]="isLoadingRecords">
+        {{ isLoadingRecords ? elapsedMs + 'ms…' : '⟳ Refresh' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Async banner -->
+  <div class="async-banner" *ngIf="isLoadingRecords">
+    <div class="ab-ring"></div>
+    <div class="ab-text">
+      <strong>Processing async API request</strong>
+      <span>{{ elapsedMs }}ms elapsed · {{ asyncDelayMs }}ms configured delay</span>
+    </div>
+    <div class="ab-prog"><div class="ab-bar" [style.width.%]="getAsyncProgress()"></div></div>
+  </div>
+  <div class="perf-note" *ngIf="lastProcessingTime !== null && !isLoadingRecords">
+    ⚡ Loaded in <strong>{{ lastProcessingTime }}ms</strong> (incl. {{ asyncDelayMs }}ms delay)
+  </div>
+
+  <!-- Stats (Admin/Manager) -->
+  <app-stats-cards *ngIf="auth.isAdmin || currentUser?.role === 'Manager'" [stats]="stats" [isLoading]="isLoadingStats"></app-stats-cards>
+
+  <!-- Personal KPIs (non-admin) -->
+  <div class="personal-kpis" *ngIf="!auth.isAdmin && currentUser?.role !== 'Manager'">
+    <div class="pk-card"><div class="pkv">{{ records.length }}</div><div class="pkl">My Records</div></div>
+    <div class="pk-card pk-warn"><div class="pkv">{{ pendingCount }}</div><div class="pkl">Pending</div></div>
+    <div class="pk-card pk-success"><div class="pkv">{{ completedCount }}</div><div class="pkl">Completed</div></div>
+    <div class="pk-card pk-error"><div class="pkv">{{ overdueCount }}</div><div class="pkl">Overdue</div></div>
+    <div class="pk-card pk-teal"><div class="pkv">{{ completionRate }}%</div><div class="pkl">Completion Rate</div></div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="dash-grid">
+
+    <!-- Sidebar -->
+    <div class="dash-sidebar">
+      <app-user-profile [user]="currentUser" [isLoading]="isLoadingProfile" [recordCount]="records.length" [pendingCount]="pendingCount"></app-user-profile>
+
+      <!-- Flagged candidates (Admin) -->
+      <div class="flagged-card" *ngIf="flaggedCandidates.length > 0 && (auth.isAdmin || currentUser?.role === 'Manager')">
+        <div class="fc-title"><mat-icon>warning</mat-icon>Flagged Candidates</div>
+        <div class="fc-list">
+          <div class="fc-item" *ngFor="let c of flaggedCandidates" (click)="router.navigate(['/candidates', c.id])">
+            <div class="fc-av">{{ c.firstName[0] }}{{ c.lastName[0] }}</div>
+            <div class="fc-info">
+              <div class="fc-name">{{ c.firstName }} {{ c.lastName }}</div>
+              <div class="fc-risk" [style.color]="riskColor(c.riskLevel)">{{ c.riskLevel }} Risk · {{ c.riskScore }}/100</div>
+            </div>
+            <mat-icon class="fc-arrow">chevron_right</mat-icon>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="quick-actions">
+        <div class="qa-title">Quick Actions</div>
+        <button class="qa-btn" (click)="router.navigate(['/records/new'])"><mat-icon>add_task</mat-icon>New Verification</button>
+        <button class="qa-btn" (click)="router.navigate(['/candidates'])"><mat-icon>person_search</mat-icon>Search Candidates</button>
+        <button class="qa-btn" *ngIf="auth.isAdmin || currentUser?.role === 'Manager'" (click)="router.navigate(['/reports'])"><mat-icon>analytics</mat-icon>View Reports</button>
+        <button class="qa-btn" (click)="router.navigate(['/notifications'])"><mat-icon>notifications</mat-icon>Notifications</button>
+      </div>
+    </div>
+
+    <!-- Main: Records table -->
+    <div class="dash-main">
+      <div class="section-header">
+        <div class="sh-left">
+          <h2 class="section-title">Recent Verification Records</h2>
+          <div class="status-row">
+            <span class="sr-item sr-pending">{{ pendingCount }} pending</span>
+            <span class="sr-item sr-overdue" *ngIf="overdueCount > 0">{{ overdueCount }} overdue</span>
+          </div>
+        </div>
+        <button class="view-all-btn" (click)="router.navigate(['/records'])">View All →</button>
+      </div>
+
+      <app-records-table [records]="recentRecords" [isLoading]="isLoadingRecords" [isAdmin]="auth.isAdmin"></app-records-table>
+    </div>
+  </div>
+</div>

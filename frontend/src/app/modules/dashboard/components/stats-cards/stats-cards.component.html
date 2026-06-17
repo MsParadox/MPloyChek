@@ -1,0 +1,29 @@
+<!-- Stats Cards (Admin only) -->
+<div class="stats-section">
+  <div class="stats-label">Platform Overview</div>
+
+  <!-- Skeleton -->
+  <div class="stats-grid" *ngIf="isLoading">
+    <div class="stat-card skeleton" *ngFor="let i of [1,2,3,4,5]">
+      <div class="skel skel-icon"></div>
+      <div class="skel skel-num"></div>
+      <div class="skel skel-txt"></div>
+    </div>
+  </div>
+
+  <!-- Cards -->
+  <div class="stats-grid" *ngIf="!isLoading && stats">
+    <div
+      class="stat-card"
+      *ngFor="let card of cards; let i = index"
+      [class]="'card-' + card.color"
+      [style.animation-delay]="(i * 0.08) + 's'"
+    >
+      <div class="card-icon">{{ card.icon }}</div>
+      <div class="card-value">{{ card.value }}</div>
+      <div class="card-label">{{ card.label }}</div>
+      <div class="card-sub">{{ card.sub }}</div>
+      <div class="card-glow"></div>
+    </div>
+  </div>
+</div>
