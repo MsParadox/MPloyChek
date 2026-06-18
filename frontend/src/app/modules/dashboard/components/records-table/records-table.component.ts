@@ -27,20 +27,16 @@ export class RecordsTableComponent implements OnChanges, AfterViewInit {
   @ViewChild(MatSort)      sort!: MatSort;
 
   dataSource = new MatTableDataSource<VerificationRecord>([]);
+  displayedColumns: string[] = [];
   filterValue = '';
   expandedRecord: VerificationRecord | null = null;
 
-  get displayedColumns(): string[] {
+  ngOnChanges(): void {
+    this.dataSource.data = this.records;
     const cols = ['candidateName', 'type', 'status', 'priority', 'score', 'submittedDate'];
     if (this.isAdmin) cols.unshift('ownerId');
     cols.push('actions');
-    return cols;
-  }
-
-  ngOnChanges(): void {
-    this.dataSource.data = this.records;
-    if (this.paginator) this.dataSource.paginator = this.paginator;
-    if (this.sort)      this.dataSource.sort      = this.sort;
+    this.displayedColumns = cols;
   }
 
   ngAfterViewInit(): void {

@@ -18,7 +18,9 @@ import { environment } from '@environments/environment';
 export class DashboardComponent implements OnInit, OnDestroy {
   currentUser: User | null = null;
   records: VerificationRecord[] = [];
+  recentRecords: VerificationRecord[] = [];
   candidates: Candidate[] = [];
+  flaggedCandidates: Candidate[] = [];
   stats: DashboardStats | null = null;
   analytics: AnalyticsOverview | null = null;
 
@@ -64,7 +66,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.clearRetryTimers();
     this.loadProfile();
     this.loadRecords(delay);
-    this.candidatesSvc.load().pipe(takeUntil(this.destroy$), catchError(() => of({ data: [] } as any))).subscribe({ next: r => { this.candidates = r.data || []; } });
+    this.candidatesSvc.load().pipe(takeUntil(this.destroy$), catchError(() => of({ data: [] } as any))).subscribe({ next: r => { this.candidates = r.data || []; this.flaggedCandidates = this.candidates.filter(c => c.status === 'Flagged'); } });
     this.notifSvc.load().pipe(takeUntil(this.destroy$), catchError(() => of(null))).subscribe();
     if (this.auth.isAdmin || this.auth.currentUser?.role === 'Manager') {
       this.loadStats();
@@ -98,7 +100,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         return of({ data: [], success: false } as any);
       }),
       finalize(() => this.zone.run(() => { this.isLoadingRecords = false; this.stopElapsedTimer(); }))
-    ).subscribe({ next: r => { if ((r as any)?.data?.length) { this.records = (r as any).data; this.lastProcessingTime = (r as any).processingTime ?? null; } } });
+    ).subscribe({ next: r => { if ((r as any)?.data?.length) { this.records = (r as any).data; this.recentRecords = this.records.slice(0, 5); this.lastProcessingTime = (r as any).processingTime ?? null; } } });
   }
 
   loadStats(): void {
@@ -157,8 +159,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get overdueCount(): number { return this.records.filter(r => !TERMINAL_STATUSES.includes(r.status) && new Date(r.dueDate) < new Date()).length; }
   // FIX: 'Approved' is also a successful completion state
   get completedCount(): number { return this.records.filter(r => r.status === 'Completed' || r.status === 'Approved').length; }
-  get flaggedCandidates(): Candidate[] { return this.candidates.filter(c => c.status === 'Flagged'); }
-  get recentRecords(): VerificationRecord[] { return this.records.slice(0, 5); }
   // FIX: Use completedCount (includes Approved) in rate calculation
   get completionRate(): number { return this.records.length ? Math.round((this.completedCount / this.records.length) * 100) : 0; }
 
