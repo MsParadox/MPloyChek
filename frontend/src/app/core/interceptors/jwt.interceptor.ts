@@ -11,7 +11,7 @@ import { Observable, throwError, BehaviorSubject, catchError, filter, switchMap,
 import { Router } from '@angular/router';
 import { environment } from '@environments/environment';
 
-const REQUEST_TIMEOUT_MS = 12_000; // 12s — Render cold start takes ~60s; short timeout shows error fast so user can retry
+const REQUEST_TIMEOUT_MS = 65_000; // 12s — Render cold start takes ~60s; short timeout shows error fast so user can retry
 
 @Injectable()
 export class JwtInterceptor implements HttpInterceptor {

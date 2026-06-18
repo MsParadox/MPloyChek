@@ -25,7 +25,9 @@ export class WebSocketService {
    * The server validates the token and rejects spoofed connections.
    */
   connect(token: string): void {
-    if (this.ws?.readyState === WebSocket.OPEN) return;
+    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+    return;
+  }
 
     // FIX HIGH-3: wsUrl from environment (works in prod without code changes)
     // FIX CRITICAL-2: token in query param, not userId
