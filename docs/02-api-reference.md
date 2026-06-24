@@ -1,77 +1,96 @@
 # MPloyChek — API Reference
 
-**Base URL:** `https://mploychek-api.onrender.com/api`  
-**Auth:** All endpoints except `/auth/login` require `Authorization: Bearer <token>`
+> **Base URL:** `https://mploychek-api.onrender.com/api`  
+> All endpoints except `/auth/login` require `Authorization: Bearer <accessToken>`.  
+> Every response follows the [standard envelope](#response-format).
+
+---
+
+## Demo Credentials
+
+| User ID | Password | Role | Access |
+|---------|----------|------|--------|
+| `admin001` | `Admin@123` | Admin | Full platform access |
+| `john001` | `User@123` | Manager | Candidates + all records |
+| `priya001` | `Verify@123` | Verifier | Record status updates |
+| `mohit001` | `User@123` | General User | Own records only |
 
 ---
 
 ## Authentication
 
-| Method | Endpoint | Body | Description |
-|--------|----------|------|-------------|
-| POST | `/auth/login` | `{userId, password}` | Login — returns `accessToken`, `refreshToken`, `user` |
-| POST | `/auth/refresh` | `{refreshToken}` | Rotate refresh token — returns new token pair |
-| POST | `/auth/logout` | — | Revoke all sessions for current user |
-| GET  | `/auth/me` | — | Current user profile |
-| POST | `/auth/change-password` | `{currentPassword, newPassword}` | Change password + revoke all sessions |
+| Method | Endpoint | Auth | Body | Description |
+|--------|----------|:----:|------|-------------|
+| `POST` | `/auth/login` | ❌ | `{ userId, password }` | Returns `accessToken`, `refreshToken`, `user` |
+| `POST` | `/auth/refresh` | ❌ | `{ refreshToken }` | Rotates token pair — old refresh token revoked |
+| `POST` | `/auth/logout` | ✅ | — | Revokes all sessions for the current user |
+| `GET`  | `/auth/me` | ✅ | — | Returns current user profile |
+| `POST` | `/auth/change-password` | ✅ | `{ currentPassword, newPassword }` | Changes password + revokes all sessions |
 
-> **Role note:** `role` is never sent by the client. It is loaded from the database on login and embedded in the JWT by the server.
+> **Security note:** The client never sends a `role` field. Role is loaded from the database on login and embedded in the JWT by the server.
 
 ---
 
 ## Users *(Admin only)*
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/users` | List all users (paginated) |
-| GET | `/users/stats` | User count by role / status |
-| GET | `/users/:id` | Get user by ID |
-| POST | `/users` | Create user |
-| PATCH | `/users/:id` | Update user |
-| DELETE | `/users/:id` | Delete user |
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| `GET` | `/users` | Admin | List all users (paginated) |
+| `GET` | `/users/stats` | Admin | Platform user statistics |
+| `GET` | `/users/:id` | Admin | Get user by ID |
+| `POST` | `/users` | Admin | Create a new user |
+| `PATCH` | `/users/:id` | Admin or Self | Update user fields |
+| `DELETE` | `/users/:id` | Admin | Delete user |
 
 ---
 
 ## Records
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/records` | List records (paginated, filterable) |
-| GET | `/records/summary` | Status / type summary counts |
-| GET | `/records/:id` | Record detail with timeline |
-| POST | `/records` | Create verification request |
-| PATCH | `/records/:id` | Update status / score / remarks |
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| `GET` | `/records` | All | List records — Admin/Manager see all; others see own only |
+| `GET` | `/records/summary` | All | Status and type counts |
+| `GET` | `/records/:id` | All | Record detail + full timeline |
+| `POST` | `/records` | Admin / Manager | Create verification request |
+| `PATCH` | `/records/:id` | Admin / Manager / Verifier | Update status, score, remarks |
 
 **Status workflow:**
+
 ```
-Pending → In Review → Verification Running → Approved / Rejected / Failed
+Pending → In Review → Verification Running → Approved  (terminal)
+                                           → Rejected  (terminal)
                                            → On Hold → resume
+Pending → Cancelled  (terminal)
 ```
+
+Invalid transitions return `400` with an `allowedNext` array listing valid next states.
 
 ---
 
 ## Candidates
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/candidates` | List candidates (paginated) |
-| GET | `/candidates/:id` | Candidate + all records |
-| POST | `/candidates` | Create candidate |
-| PATCH | `/candidates/:id` | Update candidate |
-| DELETE | `/candidates/:id` | Archive candidate |
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| `GET` | `/candidates` | All | List candidates (paginated) |
+| `GET` | `/candidates/:id` | All | Candidate details + all associated records |
+| `POST` | `/candidates` | Admin / Manager | Create candidate |
+| `PATCH` | `/candidates/:id` | Admin / Manager | Update candidate |
+| `DELETE` | `/candidates/:id` | Admin | Archive candidate |
 
 ---
 
 ## Documents
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/documents/upload/:candidateId` | Upload file (multipart/form-data) |
-| GET  | `/documents/candidate/:candidateId` | List candidate's documents |
-| GET  | `/documents/:id` | Document metadata |
-| DELETE | `/documents/:id` | Delete document |
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| `POST` | `/documents/upload/:candidateId` | Admin / Manager / Verifier | Upload file (`multipart/form-data`) |
+| `GET` | `/documents/candidate/:candidateId` | All | List candidate's documents |
+| `GET` | `/documents/:id` | All | Document metadata |
+| `DELETE` | `/documents/:id` | Admin or Owner | Delete document |
 
-Accepted types: PAN, Aadhaar, Passport, Resume, Degree Certificate, Experience Letter (and 10 more).
+**Accepted types:** PAN, Aadhaar, Passport, Resume, Degree Certificate, Experience Letter, Bank Statement, Salary Slip, Offer Letter, Relieving Letter, Character Certificate, Police Clearance, Medical Certificate, Address Proof, Other.
+
+**Limits:** Max 10 MB · Formats: PDF, JPEG, PNG, WEBP, DOC, DOCX.
 
 ---
 
@@ -79,9 +98,9 @@ Accepted types: PAN, Aadhaar, Passport, Resume, Degree Certificate, Experience L
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/notifications` | All notifications for current user |
-| PATCH | `/notifications/:id/read` | Mark one read |
-| PATCH | `/notifications/mark-all-read` | Mark all read |
+| `GET` | `/notifications` | All notifications for the authenticated user |
+| `PATCH` | `/notifications/:id/read` | Mark one notification as read |
+| `PATCH` | `/notifications/mark-all-read` | Mark all notifications read |
 
 ---
 
@@ -89,75 +108,98 @@ Accepted types: PAN, Aadhaar, Passport, Resume, Degree Certificate, Experience L
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/search?q=term&limit=5` | Cross-entity search (users + candidates + records) |
+| `GET` | `/search?q=term&limit=5` | Cross-entity search across users, candidates, and records |
+
+Results are privilege-scoped — General Users only see their own records.
 
 ---
 
-## Analytics *(Admin / Manager / Verifier)*
+## Analytics
 
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| GET | `/analytics/overview` | Admin / Manager / Verifier | Full dashboard stats, trends, risk breakdown |
-| GET | `/analytics/audit-logs` | Admin / Manager | Recent audit log entries |
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| `GET` | `/analytics/overview` | Admin / Manager / Verifier | Dashboard stats: totals, trends, risk breakdown, monthly chart |
+| `GET` | `/analytics/audit-logs` | Admin / Manager | Recent audit log entries |
 
 ---
 
 ## Export
 
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| GET | `/export/records?format=csv\|json` | Any user (scoped to own records) | Export records |
-| GET | `/export/candidates?format=csv\|json` | Admin / Manager | Export all candidates |
-| GET | `/export/audit-logs` | Admin / Manager | Export audit log (CSV) |
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| `GET` | `/export/records?format=csv\|json` | All (own data only) | Export records |
+| `GET` | `/export/candidates?format=csv\|json` | Admin / Manager | Export all candidates |
+| `GET` | `/export/audit-logs` | Admin / Manager | Export audit log (CSV, RFC-4180) |
 
 ---
 
 ## WebSocket
 
 ```
-wss://mploychek-api.onrender.com?token=<JWT>
+wss://mploychek-api.onrender.com?token=<accessToken>
 ```
 
-- Connection authenticated with JWT on handshake (code 4401 = auth failure)
-- Server pushes `{ type: 'notification', ... }` events on status changes
-- Heartbeat every 30s — dead connections auto-terminated
-- Re-connects automatically on drop (except 4401)
+| Event | Direction | Payload |
+|-------|-----------|---------|
+| Connection | Client → Server | JWT passed as query param, verified on handshake |
+| `notification` | Server → Client | `{ type: 'notification', id, message, recordId }` |
+| Auth failure | Server → Client | Close code `4401` |
+| Heartbeat | Server → Client | `ping` every 30 s; client responds `pong` |
+
+Dead connections (no `pong`) are auto-terminated before the next heartbeat cycle.
 
 ---
 
 ## Common Query Parameters
 
-| Param | Type | Description |
-|-------|------|-------------|
-| `page` | number | Page number (default: 1) |
-| `pageSize` | number | Items per page (default: 10, max: 100) |
-| `sortBy` | string | Field to sort by |
-| `sortDir` | `asc` \| `desc` | Sort direction (default: desc) |
-| `status` | string | Filter by status |
-| `type` | string | Filter by type |
-| `delay` | ms | Simulate API latency for demo (0–10000) |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | `number` | `1` | Page number |
+| `pageSize` | `number` | `10` | Items per page (max 100) |
+| `sortBy` | `string` | varies | Field to sort by |
+| `sortDir` | `asc` \| `desc` | `desc` | Sort direction |
+| `status` | `string` | — | Filter by status |
+| `type` | `string` | — | Filter by type |
+| `delay` | `number` | `0` | Simulate latency in ms (0–10 000) — demo only |
 
 ---
 
-## Response Envelope
+## Response Format
 
-All responses follow this shape:
-
+**Success:**
 ```json
 {
   "success": true,
   "data": {},
-  "message": "optional",
+  "message": "optional human-readable message",
   "timestamp": "2024-01-01T00:00:00.000Z",
   "processingTime": 42
 }
 ```
 
-Error responses:
+**Error:**
 ```json
 {
   "success": false,
-  "error": "descriptive message",
+  "error": "descriptive error message",
   "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+**Validation error (400):**
+```json
+{
+  "success": false,
+  "error": "Validation failed",
+  "details": [{ "field": "password", "message": "Must be at least 8 characters" }]
+}
+```
+
+**Invalid workflow transition (400):**
+```json
+{
+  "success": false,
+  "error": "Invalid transition from Pending to Approved",
+  "allowedNext": ["In Review", "Cancelled"]
 }
 ```
